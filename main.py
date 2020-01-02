@@ -1,5 +1,6 @@
 import pygame
 import os
+from random import choice
 
 
 def load_image(name, colorkey=None):
@@ -20,100 +21,49 @@ screen = pygame.display.set_mode(size)
 screen.fill((100, 100, 100))
 
 running = True
-GOEVENT = 30
+MOVEEVENT = 30
 
 all_sprites = pygame.sprite.Group()
-horizontal_borders = pygame.sprite.Group()
-vertical_borders = pygame.sprite.Group()
-pygame.time.set_timer(GOEVENT, 15)
+pygame.time.set_timer(MOVEEVENT, 100)
 
 
-class Border(pygame.sprite.Sprite):
-    # строго вертикальный или строго горизонтальный отрезок
-    def __init__(self, x1, y1, x2, y2):
-        super().__init__(all_sprites)
-        if x1 == x2:  # вертикальная стенка
-            self.add(vertical_borders)
-            self.image = pygame.Surface([1, y2 - y1])
-            self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
-        else:  # горизонтальная стенка
-            self.add(horizontal_borders)
-            self.image = pygame.Surface([x2 - x1, 1])
-            self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
+class Tasks(pygame.sprite.Sprite):
+    image = load_image(choice(['task_1.png', 'task_2.png', 'task_3.png']), (0, 0, 0))
 
-
-class CompilationError(pygame.sprite.Sprite):
-    image = load_image("mob_1.png", (0, 0, 0))
-
-    def __init__(self, group, width, height):
+    def __init__(self, group, x, y):
         super().__init__(group)
-        self.image = CompilationError.image
+        self.image = Tasks.image
         self.rect = self.image.get_rect()
-        self.rect.x = width
-        self.rect.y = height
-        self.vx = 3
+        self.rect.x = x
+        self.rect.y = y
+        self.save_y = self.rect.y
+        self.upd = 0
 
     def update(self):
-        self.rect = self.rect.move(self.vx, 0)
-        if pygame.sprite.spritecollideany(self, vertical_borders):
-            self.vx = -self.vx
+        self.upd += 1
+        if self.upd % 4 == 1:
+            self.rect.y += 1
+        elif self.upd % 4 == 2:
+            self.rect.y += 1
+        elif self.upd % 4 == 3:
+            self.rect.y += 1
+        else:
+            self.rect.y = self.save_y
 
 
-class RuntimeError(pygame.sprite.Sprite):
-    image = load_image("mob_3.png", (0, 0, 0))
-
-    def __init__(self, group, width, height):
-        super().__init__(group)
-        self.image = RuntimeError.image
-        self.rect = self.image.get_rect()
-        self.rect.x = width
-        self.rect.y = height
-        self.vy = 3
-
-    def update(self):
-        self.rect = self.rect.move(0, self.vy)
-        if pygame.sprite.spritecollideany(self, horizontal_borders):
-            self.vy = -self.vy
-
-
-class WrongAnswer(pygame.sprite.Sprite):
-    image = load_image("mob_2.png", (0, 0, 0))
-
-    def __init__(self, group, width, height):
-        super().__init__(group)
-        self.image = WrongAnswer.image
-        self.rect = self.image.get_rect()
-        self.rect.x = width
-        self.rect.y = height
-        self.vx = 2
-        self.vy = 2
-
-    def update(self):
-        self.rect = self.rect.move(self.vx, self.vy)
-        if pygame.sprite.spritecollideany(self, horizontal_borders):
-            self.vy = -self.vy
-        if pygame.sprite.spritecollideany(self, vertical_borders):
-            self.vx = -self.vx
-
-Border(5, 5, 300 - 5, 5)
-Border(5, 300 - 5, 300 - 5, 300 - 5)
-Border(5, 5, 5, 300 - 5)
-Border(300 - 5, 5, 300 - 5, 300 - 5)
-CompilationError(all_sprites, 200, 200)
-RuntimeError(all_sprites, 200, 200)
-WrongAnswer(all_sprites, 200, 200)
-
+# create all possible coord
+tasks_places = [(50, 40)]
+for _ in range(1):
+    Tasks(all_sprites, *choice(tasks_places))
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == GOEVENT:
+        if event.type == MOVEEVENT:
             all_sprites.update()
 
         screen.fill((100, 100, 100))
         all_sprites.draw(screen)
-        vertical_borders.draw(screen)
-        horizontal_borders.draw(screen)
 
     pygame.display.flip()
