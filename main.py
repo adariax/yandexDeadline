@@ -3,7 +3,7 @@ import os
 
 
 def load_image(name, colorkey=None):
-    fullname = os.path.join(name)
+    fullname = os.path.join('data', name)
     image = pygame.image.load(fullname).convert()
     if colorkey is not None:
         if colorkey == -1:
@@ -29,25 +29,47 @@ all_sprites = pygame.sprite.Group()
 
 
 class Character(pygame.sprite.Sprite):
-    images = {}
-    for status in ['standing', 'walking']:
-        for direction in ['forward', 'left', 'right', 'back']:
-            eval(f'images[{status}] = [[] * 11]')
-    image = load_image('', (0, 0, 0))
-
     def __init__(self, group, x, y):
         super().__init__(group)
-        self.image = Character.image
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.x = x
+        self.y = y
+        self.frames = 11
+        self.vx = 0
+        self.vy = 0
 
-        self.direction = 'f'
-        self.stand_still = True
+        self.direction = 0
+        self.cur_frame = 0
+        self.status = 'standing'
+
+        # forward - 0, left - 1, back - 2, right - 3
+
+        self.images = {}
+        for status in ['standing']:  # , 'walking'
+            for direction in [0, 1, 3]:
+                eval(f'self.images[{status}] = [[] * 11]')
+                for number_file in range(1, 12):
+                    self.images[status][direction][number_file] = \
+                        load_image(f'/character/{status}/{direction}', (0, 0, 0))
 
     def update(self):
-        self.image = self.frames[self.cur_frame // TRIG_FRAME]
-        self.cur_frame = (self.cur_frame + 1) % (len(self.frames) * TRIG_FRAME)
+        keys = pygame.key.get_pressed()
+        self.image = self.images[self.status][self.direction][self.cur_frame // self.frames]
+        self.cur_frame += 1
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = self.x, self.y
+
+        if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
+            # self.status = 'walking'
+            self.direction = 1 if keys[pygame.K_LEFT] else 3
+            self.vx = -10 if keys[pygame.K_LEFT] else 10
+        else:
+            self.status = 'standing'
+        self.rect.move(self.vx, self.vy)
+        '''elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
+            self.status = 'walking'
+            self.direction = 2 if keys[pygame.K_UP] else 0
+            self.vy = -10 if keys[pygame.K_UP] else 10'''
+
 
 
 while running:
