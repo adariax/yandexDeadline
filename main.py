@@ -1,6 +1,5 @@
 import pygame
 import os
-from random import choice
 
 
 def load_image(name, colorkey=None):
@@ -16,54 +15,49 @@ def load_image(name, colorkey=None):
 
 
 pygame.init()
+
 size = (500, 500)
 screen = pygame.display.set_mode(size)
 screen.fill((100, 100, 100))
 
 running = True
-MOVEEVENT = 30
+FPS = 60
+TRIG_FRAME = 5
 
+clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
-pygame.time.set_timer(MOVEEVENT, 100)
 
 
-class Tasks(pygame.sprite.Sprite):
-    image = load_image(choice(['task_1.png', 'task_2.png', 'task_3.png']), (0, 0, 0))
+class Character(pygame.sprite.Sprite):
+    images = {}
+    for status in ['standing', 'walking']:
+        for direction in ['forward', 'left', 'right', 'back']:
+            eval(f'images[{status}] = [[] * 11]')
+    image = load_image('', (0, 0, 0))
 
     def __init__(self, group, x, y):
         super().__init__(group)
-        self.image = Tasks.image
+        self.image = Character.image
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.save_y = self.rect.y
-        self.upd = 0
+
+        self.direction = 'f'
+        self.stand_still = True
 
     def update(self):
-        self.upd += 1
-        if self.upd % 4 == 1:
-            self.rect.y += 1
-        elif self.upd % 4 == 2:
-            self.rect.y += 1
-        elif self.upd % 4 == 3:
-            self.rect.y += 1
-        else:
-            self.rect.y = self.save_y
+        self.image = self.frames[self.cur_frame // TRIG_FRAME]
+        self.cur_frame = (self.cur_frame + 1) % (len(self.frames) * TRIG_FRAME)
 
-
-# create all possible coord
-tasks_places = [(50, 40)]
-for _ in range(1):
-    Tasks(all_sprites, *choice(tasks_places))
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == MOVEEVENT:
-            all_sprites.update()
 
         screen.fill((100, 100, 100))
         all_sprites.draw(screen)
 
     pygame.display.flip()
+
+    clock.tick(FPS)
