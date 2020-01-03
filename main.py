@@ -1,10 +1,9 @@
 import pygame
 import os
-from random import choice
 
 
 def load_image(name, colorkey=None):
-    fullname = os.path.join(name)
+    fullname = os.path.join('data', name)
     image = pygame.image.load(fullname).convert()
     if colorkey is not None:
         if colorkey == -1:
@@ -16,54 +15,71 @@ def load_image(name, colorkey=None):
 
 
 pygame.init()
+
 size = (500, 500)
 screen = pygame.display.set_mode(size)
 screen.fill((100, 100, 100))
 
 running = True
-MOVEEVENT = 30
+FPS = 60
+TRIG_FRAME = 5
 
+clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
-pygame.time.set_timer(MOVEEVENT, 100)
 
 
-class Tasks(pygame.sprite.Sprite):
-    image = load_image(choice(['task_1.png', 'task_2.png', 'task_3.png']), (0, 0, 0))
-
+class Character(pygame.sprite.Sprite):
     def __init__(self, group, x, y):
         super().__init__(group)
-        self.image = Tasks.image
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.save_y = self.rect.y
-        self.upd = 0
+        self.x = x
+        self.y = y
+        self.frames = 11
+        self.vx = 0
+        self.vy = 0
+
+        self.direction = 0
+        self.cur_frame = 0
+        self.status = 'standing'
+
+        # forward - 0, left - 1, back - 2, right - 3
+
+        self.images = {}
+        for status in ['standing']:  # , 'walking'
+            for direction in [0, 1, 3]:
+                eval(f'self.images[{status}] = [[] * 11]')
+                for number_file in range(1, 12):
+                    self.images[status][direction][number_file] = \
+                        load_image(f'/character/{status}/{direction}', (0, 0, 0))
 
     def update(self):
-        self.upd += 1
-        if self.upd % 4 == 1:
-            self.rect.y += 1
-        elif self.upd % 4 == 2:
-            self.rect.y += 1
-        elif self.upd % 4 == 3:
-            self.rect.y += 1
+        keys = pygame.key.get_pressed()
+        self.image = self.images[self.status][self.direction][self.cur_frame // self.frames]
+        self.cur_frame += 1
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = self.x, self.y
+
+        if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
+            # self.status = 'walking'
+            self.direction = 1 if keys[pygame.K_LEFT] else 3
+            self.vx = -10 if keys[pygame.K_LEFT] else 10
         else:
-            self.rect.y = self.save_y
+            self.status = 'standing'
+        self.rect.move(self.vx, self.vy)
+        '''elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
+            self.status = 'walking'
+            self.direction = 2 if keys[pygame.K_UP] else 0
+            self.vy = -10 if keys[pygame.K_UP] else 10'''
 
 
-# create all possible coord
-tasks_places = [(50, 40)]
-for _ in range(1):
-    Tasks(all_sprites, *choice(tasks_places))
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == MOVEEVENT:
-            all_sprites.update()
 
         screen.fill((100, 100, 100))
         all_sprites.draw(screen)
 
     pygame.display.flip()
+
+    clock.tick(FPS)
