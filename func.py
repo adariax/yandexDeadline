@@ -3,7 +3,7 @@ import pygame
 
 
 def load_image(name, colorkey=None):
-    fullname = os.path.join('data', name)
+    fullname = os.path.join(name)
     image = pygame.image.load(fullname).convert()
     if colorkey is not None:
         if colorkey == -1:
