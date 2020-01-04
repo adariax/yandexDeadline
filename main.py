@@ -28,7 +28,8 @@ pygame.time.set_timer(MOVEEVENT, 100)
 
 
 class Tasks(pygame.sprite.Sprite):
-    image = load_image(choice(['task_1.png', 'task_2.png', 'task_3.png']), (0, 0, 0))
+    image = load_image(f"data\\tasks\\ + {choice(['task_1.png', 'task_2.png', 'task_3.png'])}",
+                       (0, 0, 0))
 
     def __init__(self, group, x, y):
         super().__init__(group)
