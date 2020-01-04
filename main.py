@@ -1,38 +1,36 @@
 import pygame
-import os
-
-
-def load_image(name, colorkey=None):
-    fullname = os.path.join(name)
-    image = pygame.image.load(fullname).convert()
-    if colorkey is not None:
-        if colorkey == -1:
-            colorkey = image.get_at((0, 0))
-        image.set_colorkey(colorkey)
-    else:
-        image = image.convert_alpha()
-    return image
-
+from random import choice
+from func import load_image
 
 pygame.init()
-size = (500, 500)
+size = (800, 600)
 screen = pygame.display.set_mode(size)
 screen.fill((100, 100, 100))
 
 running = True
 MOVEEVENT = 30
-GOEVENT = 30
+GOEVENT = 31
 
-all_sprites = pygame.sprite.Group()
-horizontal_borders = pygame.sprite.Group()
-vertical_borders = pygame.sprite.Group()
 pygame.time.set_timer(GOEVENT, 15)
 pygame.time.set_timer(MOVEEVENT, 100)
+clock = pygame.time.Clock()
+
+FPS = 20
+all_sprites = pygame.sprite.Group()
+tasks = pygame.sprite.Group()
+character = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
+horizontal_borders = pygame.sprite.Group()
+vertical_borders = pygame.sprite.Group()
+
+collected_tasks = 0
 
 
 class Character(pygame.sprite.Sprite):
-    def __init__(self, group, x, y):
-        super().__init__(group)
+    def __init__(self, x, y):
+        super().__init__(all_sprites)
+        self.add(character
+                 )
         self.x = x
         self.y = y
         self.frames = 11
@@ -44,8 +42,8 @@ class Character(pygame.sprite.Sprite):
         self.status = 'standing'
         self.images_standing = [[], [], [], []]
         self.images_walking = [[], [], [], []]
-        print(self.images_standing)
         self.image = None
+        self.mask = None
         # forward - 0, left - 1, back - 2, right - 3
 
         for direction in range(4):
@@ -60,9 +58,14 @@ class Character(pygame.sprite.Sprite):
         self.image = self.images_standing[0][self.cur_frame]
         self.rect = self.image.get_rect()
 
+
     def update(self):
         keys = pygame.key.get_pressed()
-        moving = False
+        moving = None
+
+        if pygame.sprite.spritecollideany(self, enemies):
+            print('jopa')
+
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
             self.status = 'walking'
             self.direction = 1 if keys[pygame.K_LEFT] else 3
@@ -76,22 +79,23 @@ class Character(pygame.sprite.Sprite):
             self.y += self.vy
             moving = True
         else:
-            self.vx = 0
-            self.vy = 0
             self.status = 'standing'
 
         self.image = self.images_standing[self.direction][self.cur_frame % self.frames] \
             if not moving else self.images_walking[self.direction][self.cur_frame % self.frames]
+        self.mask = pygame.mask.from_surface(self.image)
         self.cur_frame += 1
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = self.x, self.y
 
+
 class Tasks(pygame.sprite.Sprite):
-    image = load_image(f"data\\tasks\\ + {choice(['task_1.png', 'task_2.png', 'task_3.png'])}",
+    image = load_image(f"data\\tasks\\{choice(['task_1.png', 'task_2.png', 'task_3.png'])}",
                        (0, 0, 0))
 
-    def __init__(self, group, x, y):
-        super().__init__(group)
+    def __init__(self, x, y):
+        super().__init__(all_sprites)
+        self.add(tasks)
         self.image = Tasks.image
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -100,6 +104,10 @@ class Tasks(pygame.sprite.Sprite):
         self.upd = 0
 
     def update(self):
+        global collected_tasks
+        if pygame.sprite.spritecollideany(self, character):
+            collected_tasks += 1
+            self.kill()
         self.upd += 1
         if self.upd % 4 == 1:
             self.rect.y += 1
@@ -128,8 +136,9 @@ class Border(pygame.sprite.Sprite):
 class CompilationError(pygame.sprite.Sprite):
     image = load_image("data\\mobs\\mob_1.png", (0, 0, 0))
 
-    def __init__(self, group, width, height):
-        super().__init__(group)
+    def __init__(self, width, height):
+        super().__init__(all_sprites)
+        self.add(enemies)
         self.image = CompilationError.image
         self.rect = self.image.get_rect()
         self.rect.x = width
@@ -145,8 +154,9 @@ class CompilationError(pygame.sprite.Sprite):
 class RuntimeError(pygame.sprite.Sprite):
     image = load_image("data\\mobs\\mob_3.png", (0, 0, 0))
 
-    def __init__(self, group, width, height):
-        super().__init__(group)
+    def __init__(self, width, height):
+        super().__init__(all_sprites)
+        self.add(enemies)
         self.image = RuntimeError.image
         self.rect = self.image.get_rect()
         self.rect.x = width
@@ -162,8 +172,9 @@ class RuntimeError(pygame.sprite.Sprite):
 class WrongAnswer(pygame.sprite.Sprite):
     image = load_image("data\\mobs\\mob_2.png", (0, 0, 0))
 
-    def __init__(self, group, width, height):
-        super().__init__(group)
+    def __init__(self, width, height):
+        super().__init__(all_sprites)
+        self.add(enemies)
         self.image = WrongAnswer.image
         self.rect = self.image.get_rect()
         self.rect.x = width
@@ -178,33 +189,37 @@ class WrongAnswer(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, vertical_borders):
             self.vx = -self.vx
 
+
 Border(5, 5, 300 - 5, 5)
 Border(5, 300 - 5, 300 - 5, 300 - 5)
 Border(5, 5, 5, 300 - 5)
 Border(300 - 5, 5, 300 - 5, 300 - 5)
-CompilationError(all_sprites, 200, 200)
-RuntimeError(all_sprites, 200, 200)
-WrongAnswer(all_sprites, 200, 200)
+CompilationError(200, 200)
+RuntimeError(200, 200)
+WrongAnswer(200, 200)
 
-Character(all_sprites, 250, 200)
+Character(250, 200)
 
 
 # create all possible coord
 tasks_places = [(50, 40)]
 for _ in range(1):
-    Tasks(all_sprites, *choice(tasks_places)
-
+    Tasks(*choice(tasks_places))
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == MOVEEVENT:
+            tasks.update()
         if event.type == GOEVENT:
-            all_sprites.update()
+            enemies.update()
 
-        screen.fill((100, 100, 100))
-        all_sprites.draw(screen)
-        vertical_borders.draw(screen)
-        horizontal_borders.draw(screen)
+    character.update()
+    screen.fill((100, 100, 100))
+    all_sprites.draw(screen)
+    vertical_borders.draw(screen)
+    horizontal_borders.draw(screen)
 
     pygame.display.flip()
+    clock.tick(FPS)
