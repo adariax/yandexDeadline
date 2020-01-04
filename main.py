@@ -4,7 +4,6 @@ import os
 
 def load_image(name, colorkey=None):
     fullname = os.path.join(name)
-    print(fullname)
     image = pygame.image.load(fullname).convert()
     if colorkey is not None:
         if colorkey == -1:
@@ -37,44 +36,60 @@ class Character(pygame.sprite.Sprite):
         self.vx = 0
         self.vy = 0
 
-        self.direction = 0
+        self.direction = 1
         self.cur_frame = 0
         self.status = 'standing'
-
+        self.images_standing = [[], [], [], []]
+        self.images_walking = [[], [], [], []]
+        print(self.images_standing)
+        self.image = None
         # forward - 0, left - 1, back - 2, right - 3
 
-        self.images = {}
-        for status in ['standing']:  # , 'walking'
-            for direction in range(4):
-                self.images[status] = [[0] * 11] * 4
-                for number_file in range(11):
-                    if direction != 2:  # DELETE THIS
-                        name = ['data', 'character', status, str(direction), f'{number_file + 1}.png']
-                        print(name)
-                        self.images[status][direction][number_file] = load_image('\\'.join(name),
-                                                                                 (0, 0, 0))
-        self.image = self.images[self.status][self.direction][self.cur_frame]
+        for direction in range(4):
+            for number_file in range(11):
+                if direction % 2 != 0:  # DELETE THIS
+                    print(direction)
+                    name = ['data', 'character', 'standing', str(direction), f'{number_file + 1}.png']
+                    self.images_standing[direction].append(load_image('\\'.join(name),
+                                                                             (0, 0, 0)))
+        print(self.images_standing)
+        for direction in range(4):
+            for number_file in range(11):
+                if direction % 2 != 0:  # DELETE THIS
+                    print(direction)
+                    name = ['data', 'character', 'walking', str(direction), f'{number_file + 1}.png']
+                    self.images_walking[direction].append(load_image('\\'.join(name),
+                                                                             (0, 0, 0)))
+        self.image = self.images_standing[1][self.cur_frame]
         self.rect = self.image.get_rect()
+       # self.images = {}
+        '''for status in ['standing', 'walking']:
+            for direction in range(4):'''
+        # self.images[status] = [[0] * 11] * 4
+
 
     def update(self):
         keys = pygame.key.get_pressed()
-
+        moving = False
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
-            # self.status = 'walking'
+            self.status = 'walking'
             self.direction = 1 if keys[pygame.K_LEFT] else 3
             self.vx = -10 if keys[pygame.K_LEFT] else 10
             self.x += self.vx
-        elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
-            # self.status = 'walking'
-            self.direction = 0
-            self.vy = -10 if keys[pygame.K_UP] else 10
-            self.y += self.vy
+            moving = True
         else:
             self.vx = 0
             self.vy = 0
             self.status = 'standing'
-
-        self.image = self.images[self.status][self.direction][self.cur_frame % self.frames]
+        '''elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
+            self.status = 'walking'
+            self.direction = 0 if keys[pygame.K_UP] else 2
+            self.vy = -10 if keys[pygame.K_UP] else 10
+            self.y += self.vy
+            moving = True'''
+        print(self.cur_frame % self.frames, self.direction)
+        self.image = self.images_standing[self.direction][self.cur_frame % self.frames] \
+            if not moving else self.images_walking[self.direction][self.cur_frame % self.frames]
         self.cur_frame += 1
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = self.x, self.y
