@@ -43,7 +43,7 @@ class Border(pygame.sprite.Sprite):
 
 
 class CompilationError(pygame.sprite.Sprite):
-    image = load_image("mob_1.png", (0, 0, 0))
+    image = load_image("data\\mobs\\mob_1.png", (0, 0, 0))
 
     def __init__(self, group, width, height):
         super().__init__(group)
@@ -60,7 +60,7 @@ class CompilationError(pygame.sprite.Sprite):
 
 
 class RuntimeError(pygame.sprite.Sprite):
-    image = load_image("mob_3.png", (0, 0, 0))
+    image = load_image("data\\mobs\\mob_3.png", (0, 0, 0))
 
     def __init__(self, group, width, height):
         super().__init__(group)
@@ -77,7 +77,7 @@ class RuntimeError(pygame.sprite.Sprite):
 
 
 class WrongAnswer(pygame.sprite.Sprite):
-    image = load_image("mob_2.png", (0, 0, 0))
+    image = load_image("data\\mobs\\mob_2.png", (0, 0, 0))
 
     def __init__(self, group, width, height):
         super().__init__(group)
