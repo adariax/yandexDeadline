@@ -3,6 +3,8 @@ from random import choice
 from func import load_image
 
 pygame.init()
+WIDTH = 800
+HEIGHT = 600
 size = (800, 600)
 screen = pygame.display.set_mode(size)
 screen.fill((100, 100, 100))
@@ -26,11 +28,26 @@ vertical_borders = pygame.sprite.Group()
 collected_tasks = 0
 
 
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
+
+
 class Character(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        super().__init__(all_sprites)
-        self.add(character
-                 )
+        super().__init__(character)
         self.x = x
         self.y = y
         self.frames = 11
@@ -87,6 +104,7 @@ class Character(pygame.sprite.Sprite):
         self.cur_frame += 1
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = self.x, self.y
+        return moving
 
 
 class Tasks(pygame.sprite.Sprite):
@@ -200,7 +218,9 @@ CompilationError(200, 200)
 RuntimeError(200, 200)
 WrongAnswer(200, 200)
 
-Character(250, 200)
+player = Character(250, 200)
+
+camera = Camera()
 
 
 # create all possible coord
@@ -217,8 +237,14 @@ while running:
         if event.type == GOEVENT:
             enemies.update()
 
-    character.update()
+    if character.update():
+        camera.update(player)
+        for sprite in all_sprites:
+            camera.apply(sprite)
+            print(sprite.rect.x)
+
     screen.fill((100, 100, 100))
+    character.draw(screen)
     all_sprites.draw(screen)
     vertical_borders.draw(screen)
     horizontal_borders.draw(screen)
