@@ -5,7 +5,7 @@ from func import load_image
 pygame.init()
 WIDTH = 800
 HEIGHT = 600
-size = (800, 600)
+size = (WIDTH, HEIGHT)
 screen = pygame.display.set_mode(size)
 screen.fill((100, 100, 100))
 
@@ -47,7 +47,8 @@ class Camera:
 
 class Character(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        super().__init__(character)
+        super().__init__(all_sprites)
+        self.add(character)
         self.x = x
         self.y = y
         self.frames = 11
@@ -78,33 +79,28 @@ class Character(pygame.sprite.Sprite):
 
     def update(self):
         keys = pygame.key.get_pressed()
-        moving = None
+        moving = False
 
-        if pygame.sprite.spritecollideany(self, enemies):
-            print('jopa')
+        '''if pygame.sprite.spritecollideany(self, enemies):
+            print('jopa')'''
 
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
-            self.status = 'walking'
             self.direction = 1 if keys[pygame.K_LEFT] else 3
             self.vx = -10 if keys[pygame.K_LEFT] else 10
-            self.x += self.vx
+            self.rect.x += self.vx
             moving = True
         elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
-            self.status = 'walking'
             self.direction = 2 if keys[pygame.K_UP] else 0
             self.vy = 10 if keys[pygame.K_DOWN] else -10
-            self.y += self.vy
+            self.rect.y += self.vy
             moving = True
-        else:
-            self.status = 'standing'
 
         self.image = self.images_standing[self.direction][self.cur_frame % self.frames] \
             if not moving else self.images_walking[self.direction][self.cur_frame % self.frames]
         self.mask = pygame.mask.from_surface(self.image)
         self.cur_frame += 1
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = self.x, self.y
-        return moving
+        # self.rect = self.image.get_rect()
+        # self.rect.x, self.rect.y = self.x, self.y
 
 
 class Tasks(pygame.sprite.Sprite):
@@ -218,10 +214,9 @@ CompilationError(200, 200)
 RuntimeError(200, 200)
 WrongAnswer(200, 200)
 
-player = Character(250, 200)
+player = Character(388, 268)
 
 camera = Camera()
-
 
 # create all possible coord
 tasks_places = [(50, 40)]
@@ -237,11 +232,10 @@ while running:
         if event.type == GOEVENT:
             enemies.update()
 
-    if character.update():
-        camera.update(player)
-        for sprite in all_sprites:
-            camera.apply(sprite)
-            print(sprite.rect.x)
+    character.update()
+    camera.update(player)
+    for sprite in all_sprites:
+        camera.apply(sprite)
 
     screen.fill((100, 100, 100))
     character.draw(screen)
