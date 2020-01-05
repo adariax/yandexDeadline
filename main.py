@@ -190,10 +190,12 @@ class WrongAnswer(pygame.sprite.Sprite):
             self.vx = -self.vx
 
 
-Border(5, 5, 300 - 5, 5)
-Border(5, 300 - 5, 300 - 5, 300 - 5)
-Border(5, 5, 5, 300 - 5)
-Border(300 - 5, 5, 300 - 5, 300 - 5)
+Border(5, 5, 450, 5)
+Border(5, 5, 5, 300)
+Border(5, 300, 150, 300)
+Border(150, 300, 150, 450)
+Border(150, 450, 450, 450)
+Border(450, 5, 450, 450)
 CompilationError(200, 200)
 RuntimeError(200, 200)
 WrongAnswer(200, 200)
