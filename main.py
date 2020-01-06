@@ -3,8 +3,8 @@ from random import choice
 from func import load_image
 
 pygame.init()
-WIDTH = 800
-HEIGHT = 300
+WIDTH = 600
+HEIGHT = 200
 size = (WIDTH, HEIGHT)
 screen = pygame.display.set_mode(size)
 screen.fill((100, 100, 100))
@@ -34,9 +34,11 @@ class Map(pygame.sprite.Sprite):
 
         self.image = pygame.Surface([0, 0])
         self.image = load_image('data\\map\\map02.png')
-        self.image = pygame.transform.scale(self.image, (3000, 1200))
+        # self.image = pygame.transform.scale(self.image, (1100, 209))
 
         self.rect = self.image.get_rect()
+        self.rect.x = - WIDTH // 2 + 24
+        self.rect.y = - HEIGHT // 2 + 32
 
 
 class Camera:
@@ -66,9 +68,8 @@ class Character(pygame.sprite.Sprite):
         self.vx = 0
         self.vy = 0
 
-        self.direction = 1
+        self.direction = 0
         self.cur_frame = 0
-        self.status = 'standing'
         self.images_standing = [[], [], [], []]
         self.images_walking = [[], [], [], []]
         self.image = None
@@ -213,7 +214,7 @@ class WrongAnswer(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, vertical_borders):
             self.vx = -self.vx
 
-map = Map()
+map_level = Map()
 
 Border(5, 5, 450, 5)
 Border(5, 5, 5, 300)
@@ -248,7 +249,7 @@ while running:
         camera.apply(sprite)
 
     screen.fill((100, 100, 100))
-    screen.blit(map.image, (0, 0))  # выравнить для персонажа
+    screen.blit(map_level.image, (-388, -268))  # выравнить для персонажа
     character.draw(screen)
     all_sprites.draw(screen)
     vertical_borders.draw(screen)
