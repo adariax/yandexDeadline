@@ -4,7 +4,7 @@ from func import load_image
 
 pygame.init()
 WIDTH = 800
-HEIGHT = 600
+HEIGHT = 300
 size = (WIDTH, HEIGHT)
 screen = pygame.display.set_mode(size)
 screen.fill((100, 100, 100))
@@ -26,6 +26,17 @@ horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 collected_tasks = 0
+
+
+class Map(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(all_sprites)
+
+        self.image = pygame.Surface([0, 0])
+        self.image = load_image('data\\map\\map02.png')
+        self.image = pygame.transform.scale(self.image, (3000, 1200))
+
+        self.rect = self.image.get_rect()
 
 
 class Camera:
@@ -75,7 +86,6 @@ class Character(pygame.sprite.Sprite):
 
         self.image = self.images_standing[0][self.cur_frame]
         self.rect = self.image.get_rect()
-
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -203,6 +213,7 @@ class WrongAnswer(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, vertical_borders):
             self.vx = -self.vx
 
+map = Map()
 
 Border(5, 5, 450, 5)
 Border(5, 5, 5, 300)
@@ -215,7 +226,6 @@ RuntimeError(200, 200)
 WrongAnswer(200, 200)
 
 player = Character(388, 268)
-
 camera = Camera()
 
 # create all possible coord
@@ -238,6 +248,7 @@ while running:
         camera.apply(sprite)
 
     screen.fill((100, 100, 100))
+    screen.blit(map.image, (0, 0))  # выравнить для персонажа
     character.draw(screen)
     all_sprites.draw(screen)
     vertical_borders.draw(screen)
