@@ -79,37 +79,53 @@ class Character(pygame.sprite.Sprite):
         for direction in range(4):
             for number_file in range(11):
                 name = ['data', 'character', 'standing', str(direction), f'{number_file + 1}.png']
-                self.images_standing[direction].append(load_image('\\'.join(name), (0, 0, 0)))
+                self.images_standing[direction].append(load_image('\\'.join(name)))
         for direction in range(4):
             for number_file in range(11):
                 name = ['data', 'character', 'walking', str(direction), f'{number_file + 1}.png']
-                self.images_walking[direction].append(load_image('\\'.join(name), (0, 0, 0)))
+                self.images_walking[direction].append(load_image('\\'.join(name)))
 
         self.image = self.images_standing[0][self.cur_frame]
         self.rect = self.image.get_rect()
+        self.mask = pygame.mask.Mask((48, 64), True)
+
+    def check_vertical_wall(self, current_direction, new_direction):
+        if pygame.sprite.spritecollideany(self, vertical_borders) \
+                and current_direction == new_direction:
+            return False
+        else:
+            return True
+
+    def check_horizontal_wall(self, current_direction, new_direction):
+        if pygame.sprite.spritecollideany(self, horizontal_borders) \
+                and current_direction == new_direction:
+            return False
+        else:
+            return True
 
     def update(self):
         keys = pygame.key.get_pressed()
         moving = False
-
-        '''if pygame.sprite.spritecollideany(self, enemies):
-            print('jopa')'''
+        direction = self.direction
 
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
-            self.direction = 1 if keys[pygame.K_LEFT] else 3
+            direction = 1 if keys[pygame.K_LEFT] else 3
             self.vx = -10 if keys[pygame.K_LEFT] else 10
-            self.rect.x += self.vx
+            self.rect.x += self.vx if \
+                self.check_vertical_wall(self.direction, direction) else -1 if self.vx > 0 else 1
             moving = True
         elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
-            self.direction = 2 if keys[pygame.K_UP] else 0
+            direction = 2 if keys[pygame.K_UP] else 0
             self.vy = 10 if keys[pygame.K_DOWN] else -10
-            self.rect.y += self.vy
+            self.rect.y += self.vy \
+                if self.check_horizontal_wall(self.direction, direction) \
+                else -1 if self.vy > 0 else 1
             moving = True
 
         self.image = self.images_standing[self.direction][self.cur_frame % self.frames] \
             if not moving else self.images_walking[self.direction][self.cur_frame % self.frames]
-        self.mask = pygame.mask.from_surface(self.image)
         self.cur_frame += 1
+        self.direction = direction
         # self.rect = self.image.get_rect()
         # self.rect.x, self.rect.y = self.x, self.y
 
