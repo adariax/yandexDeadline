@@ -3,8 +3,10 @@ from random import choice
 from func import load_image
 
 pygame.init()
-WIDTH = 600
-HEIGHT = 200
+WIDTH = 800
+HEIGHT = 400
+X = - WIDTH // 2
+Y = - HEIGHT // 2
 size = (WIDTH, HEIGHT)
 screen = pygame.display.set_mode(size)
 screen.fill((100, 100, 100))
@@ -33,12 +35,12 @@ class Map(pygame.sprite.Sprite):
         super().__init__(all_sprites)
 
         self.image = pygame.Surface([0, 0])
-        self.image = load_image('data\\map\\map02.png')
-        # self.image = pygame.transform.scale(self.image, (1100, 209))
+        self.image = load_image('data\\map\\map.png')
+        self.image = pygame.transform.scale(load_image('data\\map\\map.png'), (3000, 506))
 
         self.rect = self.image.get_rect()
-        self.rect.x = - WIDTH // 2 + 24
-        self.rect.y = - HEIGHT // 2 + 32
+        self.rect.x = - WIDTH // 2
+        self.rect.y = - HEIGHT // 2 - 20
 
 
 class Camera:
@@ -72,62 +74,52 @@ class Character(pygame.sprite.Sprite):
         self.cur_frame = 0
         self.images_standing = [[], [], [], []]
         self.images_walking = [[], [], [], []]
-        self.image = None
-        self.mask = None
         # forward - 0, left - 1, back - 2, right - 3
 
         for direction in range(4):
             for number_file in range(11):
                 name = ['data', 'character', 'standing', str(direction), f'{number_file + 1}.png']
-                self.images_standing[direction].append(load_image('\\'.join(name)))
+                self.images_standing[direction].append(pygame.transform.scale(
+                    load_image('\\'.join(name)), (96, 128)))
         for direction in range(4):
             for number_file in range(11):
                 name = ['data', 'character', 'walking', str(direction), f'{number_file + 1}.png']
-                self.images_walking[direction].append(load_image('\\'.join(name)))
+                self.images_walking[direction].append(pygame.transform.scale(
+                    load_image('\\'.join(name)), (96, 128)))
 
         self.image = self.images_standing[0][self.cur_frame]
+        self.rect = pygame.Rect(0, 0, 96, 128)
         self.rect = self.image.get_rect()
-        self.mask = pygame.mask.Mask((48, 64), True)
-
-    def check_vertical_wall(self, current_direction, new_direction):
-        if pygame.sprite.spritecollideany(self, vertical_borders) \
-                and current_direction == new_direction:
-            return False
-        else:
-            return True
-
-    def check_horizontal_wall(self, current_direction, new_direction):
-        if pygame.sprite.spritecollideany(self, horizontal_borders) \
-                and current_direction == new_direction:
-            return False
-        else:
-            return True
+        self.mask = pygame.mask.Mask((self.rect.w, self.rect.h), False)
+        for x in range(self.rect.w):
+            for y in range(self.rect.h // 4 * 3, self.rect.h):
+                self.mask.set_at((x, y), 1)
 
     def update(self):
         keys = pygame.key.get_pressed()
         moving = False
-        direction = self.direction
 
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
-            direction = 1 if keys[pygame.K_LEFT] else 3
+            self.direction = 1 if keys[pygame.K_LEFT] else 3
             self.vx = -10 if keys[pygame.K_LEFT] else 10
-            self.rect.x += self.vx if \
-                self.check_vertical_wall(self.direction, direction) else -1 if self.vx > 0 else 1
+            self.rect.x += self.vx \
+                if not pygame.sprite.spritecollideany(self, vertical_borders) else 0
             moving = True
         elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
-            direction = 2 if keys[pygame.K_UP] else 0
+            self.direction = 2 if keys[pygame.K_UP] else 0
             self.vy = 10 if keys[pygame.K_DOWN] else -10
             self.rect.y += self.vy \
-                if self.check_horizontal_wall(self.direction, direction) \
-                else -1 if self.vy > 0 else 1
+                if not pygame.sprite.spritecollideany(self, horizontal_borders) else 0
             moving = True
+
+        while pygame.sprite.spritecollideany(self, vertical_borders):
+            self.rect.x += 1 if self.vx <= 0 else -1
+        while pygame.sprite.spritecollideany(self, horizontal_borders):
+            self.rect.y += 1 if self.vy <= 0 else -1
 
         self.image = self.images_standing[self.direction][self.cur_frame % self.frames] \
             if not moving else self.images_walking[self.direction][self.cur_frame % self.frames]
         self.cur_frame += 1
-        self.direction = direction
-        # self.rect = self.image.get_rect()
-        # self.rect.x, self.rect.y = self.x, self.y
 
 
 class Tasks(pygame.sprite.Sprite):
@@ -149,15 +141,6 @@ class Tasks(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, character):
             collected_tasks += 1
             self.kill()
-        self.upd += 1
-        if self.upd % 4 == 1:
-            self.rect.y += 1
-        elif self.upd % 4 == 2:
-            self.rect.y += 1
-        elif self.upd % 4 == 3:
-            self.rect.y += 1
-        else:
-            self.rect.y = self.save_y
 
 
 class Border(pygame.sprite.Sprite):
@@ -230,14 +213,21 @@ class WrongAnswer(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, vertical_borders):
             self.vx = -self.vx
 
+
 map_level = Map()
 
-Border(5, 5, 450, 5)
-Border(5, 5, 5, 300)
-Border(5, 300, 150, 300)
-Border(150, 300, 150, 450)
-Border(150, 450, 450, 450)
-Border(450, 5, 450, 450)
+borders_coords = [(map_level.rect.x, map_level.rect.y,
+                   map_level.rect.x, map_level.rect.y + 506),
+                  (map_level.rect.x, map_level.rect.y + 506,
+                   map_level.rect.x + 3000, map_level.rect.y + 506),
+                  (map_level.rect.x + 3000, map_level.rect.y,
+                   map_level.rect.x + 3000, map_level.rect.y + 506),
+                  (map_level.rect.x, map_level.rect.y,
+                   map_level.rect.x + 3000, map_level.rect.y)]
+
+for b in borders_coords:
+    Border(*b)
+
 CompilationError(200, 200)
 RuntimeError(200, 200)
 WrongAnswer(200, 200)
@@ -246,9 +236,9 @@ player = Character(388, 268)
 camera = Camera()
 
 # create all possible coord
-tasks_places = [(50, 40)]
-for _ in range(1):
-    Tasks(*choice(tasks_places))
+tasks_coords = [(X + 100, Y + 100)]
+for t in tasks_coords:
+    Tasks(*t)
 
 while running:
     for event in pygame.event.get():
@@ -265,7 +255,6 @@ while running:
         camera.apply(sprite)
 
     screen.fill((100, 100, 100))
-    screen.blit(map_level.image, (-388, -268))  # выравнить для персонажа
     character.draw(screen)
     all_sprites.draw(screen)
     vertical_borders.draw(screen)
