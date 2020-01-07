@@ -1,7 +1,7 @@
 import pygame
 from random import choice
 from func import load_image
-from coords import bordres_coords
+from coords import create_borders_coords
 
 pygame.init()
 WIDTH = 800
@@ -89,10 +89,9 @@ class Character(pygame.sprite.Sprite):
                     load_image('\\'.join(name)), (96, 128)))
 
         self.image = self.images_standing[0][self.cur_frame]
-        self.rect = pygame.Rect(0, 0, 96, 128)
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.Mask((self.rect.w, self.rect.h), False)
-        for x in range(self.rect.w):
+        for x in range(self.rect.w // 4, self.rect.w // 4 * 3):
             for y in range(self.rect.h // 9 * 8, self.rect.h):
                 self.mask.set_at((x, y), 1)
 
@@ -103,15 +102,13 @@ class Character(pygame.sprite.Sprite):
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
             self.direction = 1 if keys[pygame.K_LEFT] else 3
             self.vx = -10 if keys[pygame.K_LEFT] else 10
-            self.rect.x += self.vx \
-                if not pygame.sprite.spritecollideany(self, vertical_borders,
+            self.rect.x += self.vx if not pygame.sprite.spritecollideany(self, vertical_borders,
                                              collided=pygame.sprite.collide_mask) else 0
             moving = True
         elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
             self.direction = 2 if keys[pygame.K_UP] else 0
             self.vy = 10 if keys[pygame.K_DOWN] else -10
-            self.rect.y += self.vy \
-                if not pygame.sprite.spritecollideany(self, horizontal_borders,
+            self.rect.y += self.vy if not pygame.sprite.spritecollideany(self, horizontal_borders,
                                              collided=pygame.sprite.collide_mask) else 0
             moving = True
 
@@ -216,7 +213,7 @@ class WrongAnswer(Enemy):
 
 
 map_level = Map()
-
+borders_coords = create_borders_coords(map_level.rect.x, map_level.rect.y)
 for b in borders_coords:
     Border(*b)
 
