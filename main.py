@@ -260,7 +260,7 @@ class Border(pygame.sprite.Sprite):
             self.image = pygame.Surface([x2 - x1, 1])
             self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
             self.mask = pygame.mask.Mask((x2 - x1, 1), True)
-        self.image.set_alpha(100)
+        self.image.set_alpha(0)
 
 
 class InteriorItems(pygame.sprite.Sprite):
@@ -364,12 +364,11 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, name):
         super().__init__(all_sprites)
         self.add(enemies)
-        image = load_image('data\\mobs\\' + name)
-        self.image = pygame.transform.scale(image, (image.get_rect().w * 2, image.get_rect().h * 2))
+        self.image = load_image('data\\mobs\\' + name)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.vx = 3
+        self.vx = 2
         self.vy = 3
 
         self.mask = pygame.mask.Mask((self.rect.w, self.rect.h), False)
@@ -437,6 +436,14 @@ for coords in [(224, 56), (1003, 56)]:
 for coords in [(322, 95), (2342, 95), (2388, 95), (2712, 95)]:
     Chair(*coords)
 
+for coords in [(380, 110)]:
+    Table(*coords)
+
+for coord in [504, 834, 974, 1398, 2444]:
+    Walllamp(coord, 228)
+
+Carpet(2554, 160)
+
 Washingmachine(532, 100)
 Bath(700, 50)
 Toilet(890, 96)
@@ -451,7 +458,7 @@ tasks_coords = [(X + 200, Y + 200), (X + 1000, Y + 250), (X + 700, Y + 400), (X 
 for t in tasks_coords:
     Tasks(*t)
 
-CompilationError(200, 100)
+CompilationError(200, 200)
 RuntimeError(200, 100)
 WrongAnswer(200, 100)
 
