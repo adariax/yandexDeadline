@@ -260,35 +260,111 @@ class Border(pygame.sprite.Sprite):
             self.image = pygame.Surface([x2 - x1, 1])
             self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
             self.mask = pygame.mask.Mask((x2 - x1, 1), True)
+        self.image.set_alpha(100)
 
 
 class InteriorItems(pygame.sprite.Sprite):
-    def __init__(self, x, y, path):
+    def __init__(self, x, y, name, bottom_top_y=150, borders=True):
         super().__init__(all_sprites)
-        # self.add(enemies)
-        image = load_image(path)
+        image = load_image('data\\furniture\\' + name)
         self.image = pygame.transform.scale(image, (image.get_rect().w * 2, image.get_rect().h * 2))
         self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.x = X + x
+        self.rect.y = Y + y
+        self.bottom_top_y = Y + bottom_top_y
+
+        if borders:
+            Border(self.rect.x, self.bottom_top_y,
+                   self.rect.x, self.rect.y + self.rect.h)
+            Border(self.rect.x, self.bottom_top_y,
+                   self.rect.x + self.rect.w, self.bottom_top_y)
+            Border(self.rect.x, self.rect.y + self.rect.h,
+                   self.rect.x + self.rect.w, self.rect.y + self.rect.h)
+            Border(self.rect.x + self.rect.w, self.bottom_top_y,
+                   self.rect.x + self.rect.w, self.rect.y + self.rect.h)
+
+
+class Bath(InteriorItems):
+    def __init__(self, x, y):
+        super().__init__(x, y, 'bath.png')
+
+
+class Bed(InteriorItems):
+    def __init__(self, x, y, name='bed.png'):
+        super().__init__(x, y, name)
+
+
+class BigBed(Bed):
+    def __init__(self, x, y):
+        super().__init__(x, y, 'bigbed.png')
+
+
+class Carpet(InteriorItems):
+    def __init__(self, x, y):
+        super().__init__(x, y, 'carpet.png', False)
+
+
+class Chair(InteriorItems):
+    def __init__(self, x, y, y_coord=150):
+        super().__init__(x, y, 'chair.png', y_coord)
+
+
+class Chest(InteriorItems):
+    def __init__(self, x, y, y_coord=150):
+        super().__init__(x, y, 'chest.png', y_coord)
         self.bottom_top_y = self.rect.h // 4 * 3
 
-        Border(self.rect.x, self.bottom_top_y, self.rect.x, self.rect.h)
-        Border(self.rect.x, self.bottom_top_y, self.rect.w, self.bottom_top_y)
-        Border(self.rect.x, self.rect.h, self.rect.w, self.rect.h)
-        Border(self.rect.w, self.bottom_top_y, self.rect.w, self.rect.h)
 
-        self.mask = pygame.mask.Mask((self.rect.w, self.rect.h), False)
-        for x in range(self.rect.w):
-            for y in range(self.bottom_top_y, self.rect.h):
-                self.mask.set_at((x, y), 1)
+class Computer(InteriorItems):
+    def __init__(self, x, y):
+        super().__init__(x, y, 'computer.png')
+
+    def update(self, *args):
+        pass
+
+
+class Table(InteriorItems):
+    def __init__(self, x, y, y_coord=150):
+        super().__init__(x, y, 'table.png')
+        self.bottom_top_y = self.rect.h // 3 * 2
+
+
+class Toilet(InteriorItems):
+    def __init__(self, x, y):
+        super().__init__(x, y, 'toilet.png')
+        self.bottom_top_y = self.rect.h // 6 * 5
+
+
+class Wallchest(InteriorItems):
+    def __init__(self, x, y):
+        super().__init__(x, y, 'wallchest.png', 0, False)
+
+
+class Walllamp(InteriorItems):
+    def __init__(self, x, y):
+        super().__init__(x, y, 'walllamp.png', 0, False)
+
+
+class Wardrobe(InteriorItems):
+    def __init__(self, x, y):
+        super().__init__(x, y, 'wardrobe.png')
+
+
+class Washingmachine(InteriorItems):
+    def __init__(self, x, y):
+        super().__init__(x, y, 'washingmachine.png')
+
+
+class Window(InteriorItems):
+    def __init__(self, x, y):
+        super().__init__(x, y, 'window.png', borders=False)
 
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, path):
+    def __init__(self, x, y, name):
         super().__init__(all_sprites)
         self.add(enemies)
-        image = load_image('data\\mobs\\' + path)
+        image = load_image('data\\mobs\\' + name)
         self.image = pygame.transform.scale(image, (image.get_rect().w * 2, image.get_rect().h * 2))
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -338,22 +414,48 @@ class WrongAnswer(Enemy):
 
 start_screen()
 
+camera = Camera()
 map_level = Map()
+
 borders_coords = create_borders_coords(map_level.rect.x, map_level.rect.y)
 for b in borders_coords:
     Border(*b)
+
+for coords in [(324, 50), (2548, 50),]:
+    Window(*coords)
+
+for coords in [(145, 105), (2473, 105)]:
+    Bed(*coords)
+BigBed(1225, 105)
+
+for coords in [(224, 56), (1003, 56)]:
+    Wardrobe(*coords)
+
+for coords in [(224, 56), (1003, 56)]:
+    Wardrobe(*coords)
+
+for coords in [(322, 95), (2342, 95), (2388, 95), (2712, 95)]:
+    Chair(*coords)
+
+Washingmachine(532, 100)
+Bath(700, 50)
+Toilet(890, 96)
+
+Computer(2760, 100)
+
+for coords in [(30, 280, 320), (2870, 280, 320), (1100, 120)]:
+    Chest(*coords)
+
+tasks_coords = [(X + 200, Y + 200), (X + 1000, Y + 250), (X + 700, Y + 400), (X + 2500, Y + 350),
+                (X + 1500, Y + 300), (X + 1200, Y + 250)]
+for t in tasks_coords:
+    Tasks(*t)
 
 CompilationError(200, 100)
 RuntimeError(200, 100)
 WrongAnswer(200, 100)
 
 player = Character(388, 268)
-camera = Camera()
-
-tasks_coords = [(X + 200, Y + 200), (X + 1000, Y + 250), (X + 700, Y + 400), (X + 2500, Y + 350),
-                (X + 1500, Y + 300), (X + 1200, Y + 250)]
-for t in tasks_coords:
-    Tasks(*t)
 
 while running:
     for event in pygame.event.get():
