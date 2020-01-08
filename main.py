@@ -1,4 +1,5 @@
 import pygame
+import sys
 from random import choice
 from func import load_image
 from coords import create_borders_coords
@@ -33,6 +34,50 @@ horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 collected_tasks = 0
+
+
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
+def start_screen():
+    fon = pygame.transform.scale(load_image('data\\startscreen.jpg'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    string_rendered = font.render('DEADLINE', 1, pygame.Color('black'))
+    screen.blit(string_rendered, (200, 100))
+    intro_text = ['DEADLINE',
+                  '',
+                  "Соберите все задачи до того, как закончится время",
+                  "Но будьте осоторжны! Не наткнитесь на ошибки:",
+                  "они отнимают ваши драгоценные секунды",
+                  "Не забудьте сдать все задачи, дойдя до компьютера",
+                  '',
+                  "Упрвление стрелками; LSHIFT для ускорения;",
+                  "чтобы собрать задачу достаточно подойти к ней.",
+                  '',
+                  "ДЛЯ НАЧАЛА НАЖМИТЕ ЛЮБУЮ КНОПКУ"]
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 30
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color(246, 200, 159))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                return  # начинаем игру
+        pygame.display.flip()
+        clock.tick(FPS)
 
 
 def time_left(time):
@@ -116,6 +161,7 @@ class Character(pygame.sprite.Sprite):
     def update(self):
         keys = pygame.key.get_pressed()
         moving = False
+        k = 2 if keys[pygame.K_LSHIFT] else 1
 
         global millisec
         if pygame.sprite.spritecollideany(self, enemies, collided=pygame.sprite.collide_mask):
@@ -123,14 +169,14 @@ class Character(pygame.sprite.Sprite):
 
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
             self.direction = 1 if keys[pygame.K_LEFT] else 3
-            self.vx = -10 if keys[pygame.K_LEFT] else 10
+            self.vx = -10 * k if keys[pygame.K_LEFT] else 10 * k
             self.rect.x += self.vx \
                 if not pygame.sprite.spritecollideany(self, vertical_borders,
                                                       collided=pygame.sprite.collide_mask) else 0
             moving = True
         elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
             self.direction = 2 if keys[pygame.K_UP] else 0
-            self.vy = 10 if keys[pygame.K_DOWN] else -10
+            self.vy = 10 * k if keys[pygame.K_DOWN] else -10 * k
             self.rect.y += self.vy \
                 if not pygame.sprite.spritecollideany(self, horizontal_borders,
                                                       collided=pygame.sprite.collide_mask) else 0
@@ -168,7 +214,7 @@ class Tasks(pygame.sprite.Sprite):
 
         if pygame.sprite.spritecollideany(self, character):
             collected_tasks += 1
-            millisec += 50
+            millisec += 30
             self.kill()
 
 
@@ -262,6 +308,8 @@ class WrongAnswer(Enemy):
             self.vy = -self.vy
 
 
+start_screen()
+
 map_level = Map()
 borders_coords = create_borders_coords(map_level.rect.x, map_level.rect.y)
 for b in borders_coords:
@@ -282,13 +330,14 @@ for t in tasks_coords:
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            terminate()
         if event.type == MOVEEVENT:
             tasks.update()
         if event.type == GOEVENT:
             enemies.update()
 
     character.update()
+
     camera.update(player)
     for sprite in all_sprites:
         camera.apply(sprite)
