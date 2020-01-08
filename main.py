@@ -105,17 +105,14 @@ class Character(pygame.sprite.Sprite):
         self.images_standing = [[], [], [], []]
         self.images_walking = [[], [], [], []]
         # forward - 0, left - 1, back - 2, right - 3
-
-        for direction in range(4):
-            for number_file in range(11):
-                name = ['data', 'character', 'standing', str(direction), f'{number_file + 1}.png']
-                self.images_standing[direction].append(pygame.transform.scale(
-                    load_image('\\'.join(name)), (96, 128)))
-        for direction in range(4):
-            for number_file in range(11):
-                name = ['data', 'character', 'walking', str(direction), f'{number_file + 1}.png']
-                self.images_walking[direction].append(pygame.transform.scale(
-                    load_image('\\'.join(name)), (96, 128)))
+        for status in ('standing', 'walking'):
+            for direction in range(4):
+                for number_file in range(11):
+                    path = f'data\\character\\{status}\\{str(direction)}\\{number_file + 1}.png'
+                    image = load_image(path)
+                    image = pygame.transform.scale(image,
+                                                   (image.get_rect().w * 2, image.get_rect().h * 2))
+                    eval(f'self.images_{status}[direction].append(image)')
 
         self.image = self.images_standing[0][self.cur_frame]
         self.rect = self.image.get_rect()
@@ -128,17 +125,23 @@ class Character(pygame.sprite.Sprite):
         keys = pygame.key.get_pressed()
         moving = False
 
+        global millisec
+        if pygame.sprite.spritecollideany(self, enemies, collided=pygame.sprite.collide_mask):
+            millisec += 20
+
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
             self.direction = 1 if keys[pygame.K_LEFT] else 3
             self.vx = -10 if keys[pygame.K_LEFT] else 10
-            self.rect.x += self.vx if not pygame.sprite.spritecollideany(self, vertical_borders,
-                                                                         collided=pygame.sprite.collide_mask) else 0
+            self.rect.x += self.vx \
+                if not pygame.sprite.spritecollideany(self, vertical_borders,
+                                                      collided=pygame.sprite.collide_mask) else 0
             moving = True
         elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
             self.direction = 2 if keys[pygame.K_UP] else 0
             self.vy = 10 if keys[pygame.K_DOWN] else -10
-            self.rect.y += self.vy if not pygame.sprite.spritecollideany(self, horizontal_borders,
-                                                                         collided=pygame.sprite.collide_mask) else 0
+            self.rect.y += self.vy \
+                if not pygame.sprite.spritecollideany(self, horizontal_borders,
+                                                      collided=pygame.sprite.collide_mask) else 0
             moving = True
 
         while pygame.sprite.spritecollideany(self, vertical_borders,
@@ -169,8 +172,11 @@ class Tasks(pygame.sprite.Sprite):
 
     def update(self):
         global collected_tasks
+        global millisec
+
         if pygame.sprite.spritecollideany(self, character):
             collected_tasks += 1
+            millisec += 50
             self.kill()
 
 
@@ -190,14 +196,37 @@ class Border(pygame.sprite.Sprite):
             self.mask = pygame.mask.Mask((x2 - x1, 1), True)
 
 
+class InteriorItems(pygame.sprite.Sprite):
+    def __init__(self, x, y, path):
+        super().__init__(all_sprites)
+        # self.add(enemies)
+        image = load_image(path)
+        self.image = pygame.transform.scale(image, (image.get_rect().w * 2, image.get_rect().h * 2))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.bottom_top_y = self.rect.h // 4 * 3
+
+        Border(self.rect.x, self.bottom_top_y, self.rect.x, self.rect.h)
+        Border(self.rect.x, self.bottom_top_y, self.rect.w, self.bottom_top_y)
+        Border(self.rect.x, self.rect.h, self.rect.w, self.rect.h)
+        Border(self.rect.w, self.bottom_top_y, self.rect.w, self.rect.h)
+
+        self.mask = pygame.mask.Mask((self.rect.w, self.rect.h), False)
+        for x in range(self.rect.w):
+            for y in range(self.bottom_top_y, self.rect.h):
+                self.mask.set_at((x, y), 1)
+
+
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, width, height, path):
+    def __init__(self, x, y, path):
         super().__init__(all_sprites)
         self.add(enemies)
-        self.image = pygame.transform.scale(load_image(path), (64, 128))
+        image = load_image('data\\mobs\\' + path)
+        self.image = pygame.transform.scale(image, (image.get_rect().w * 2, image.get_rect().h * 2))
         self.rect = self.image.get_rect()
-        self.rect.x = width
-        self.rect.y = height
+        self.rect.x = x
+        self.rect.y = y
         self.vx = 3
         self.vy = 3
 
@@ -209,7 +238,7 @@ class Enemy(pygame.sprite.Sprite):
 
 class CompilationError(Enemy):
     def __init__(self, width, height):
-        super().__init__(width, height, "data\\mobs\\mob_1.png")
+        super().__init__(width, height, "mob_1.png")
         self.vy = 0
 
     def update(self):
@@ -220,7 +249,7 @@ class CompilationError(Enemy):
 
 class RuntimeError(Enemy):
     def __init__(self, width, height):
-        super().__init__(width, height, "data\\mobs\\mob_3.png")
+        super().__init__(width, height, "mob_3.png")
 
     def update(self):
         self.rect = self.rect.move(self.vx, self.vy)
@@ -232,7 +261,7 @@ class RuntimeError(Enemy):
 
 class WrongAnswer(Enemy):
     def __init__(self, width, height):
-        super().__init__(width, height, "data\\mobs\\mob_2.png")
+        super().__init__(width, height, "mob_2.png")
         self.vx = 0
 
     def update(self):
@@ -246,9 +275,9 @@ borders_coords = create_borders_coords(map_level.rect.x, map_level.rect.y)
 for b in borders_coords:
     Border(*b)
 
-CompilationError(200, 200)
-RuntimeError(200, 200)
-WrongAnswer(200, 200)
+CompilationError(200, 100)
+RuntimeError(200, 100)
+WrongAnswer(200, 100)
 
 player = Character(388, 268)
 camera = Camera()
@@ -275,9 +304,6 @@ while running:
     screen.fill((0, 0, 0))
 
     all_sprites.draw(screen)
-    vertical_borders.draw(screen)
-    horizontal_borders.draw(screen)
-    character.draw(screen)
 
     pygame.display.flip()
 
