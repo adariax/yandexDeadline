@@ -34,6 +34,7 @@ horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 collected_tasks = 0
+points = 3000
 
 
 def terminate():
@@ -42,11 +43,8 @@ def terminate():
 
 
 def start_screen():
-    fon = pygame.transform.scale(load_image('data\\startscreen.jpg'), (WIDTH, HEIGHT))
+    fon = pygame.transform.scale(load_image('data\\screen.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 30)
-    string_rendered = font.render('DEADLINE', 1, pygame.Color('black'))
-    screen.blit(string_rendered, (200, 100))
     intro_text = ['DEADLINE',
                   '',
                   "Соберите все задачи до того, как закончится время",
@@ -54,8 +52,8 @@ def start_screen():
                   "они отнимают ваши драгоценные секунды",
                   "Не забудьте сдать все задачи, дойдя до компьютера",
                   '',
-                  "Упрвление стрелками; LSHIFT для ускорения;",
-                  "чтобы собрать задачу достаточно подойти к ней.",
+                  "Упрвление стрелками;",
+                  "чтобы собрать задачу, достаточно подойти к ней.",
                   '',
                   "ДЛЯ НАЧАЛА НАЖМИТЕ ЛЮБУЮ КНОПКУ"]
     screen.blit(fon, (0, 0))
@@ -80,6 +78,25 @@ def start_screen():
         clock.tick(FPS)
 
 
+def endgame_screen():  # ДОПИСАТЬ
+    fon = pygame.transform.scale(load_image('data\\screen.jpg'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    line = 'GAME OVER'
+    font1 = pygame.font.Font(None, 50)
+    string_rendered1 = font1.render(line, True, pygame.Color(63, 40, 60))
+    screen.blit(string_rendered1, (698, 350))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+        pygame.display.flip()
+
+
+def time_check(time):
+    return True if time < 1440 else False
+
+
 def time_left(time):
     left_millisec = 1440 - time
     return (left_millisec % 60, left_millisec // 60)
@@ -95,6 +112,19 @@ def show_time(time):
     string_rendered2 = font2.render(line, True, pygame.Color(255, 0, 68))
     screen.blit(string_rendered1, (698, 350))
     screen.blit(string_rendered2, (700, 350))
+
+
+def get_points(tasks, time):
+    global points
+    return points + tasks * 100 - time * 5
+
+
+def show_points(tasks, time):
+    line = f'points: {get_points(tasks, time)}'
+    font = pygame.font.Font(None, 33)
+
+    string_rendered = font.render(line, True, pygame.Color(38, 43, 68))
+    screen.blit(string_rendered, (60, 350))
 
 
 class Map(pygame.sprite.Sprite):
@@ -161,7 +191,6 @@ class Character(pygame.sprite.Sprite):
     def update(self):
         keys = pygame.key.get_pressed()
         moving = False
-        k = 2 if keys[pygame.K_LSHIFT] else 1
 
         global millisec
         if pygame.sprite.spritecollideany(self, enemies, collided=pygame.sprite.collide_mask):
@@ -169,14 +198,14 @@ class Character(pygame.sprite.Sprite):
 
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
             self.direction = 1 if keys[pygame.K_LEFT] else 3
-            self.vx = -10 * k if keys[pygame.K_LEFT] else 10 * k
+            self.vx = -10 if keys[pygame.K_LEFT] else 10
             self.rect.x += self.vx \
                 if not pygame.sprite.spritecollideany(self, vertical_borders,
                                                       collided=pygame.sprite.collide_mask) else 0
             moving = True
         elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
             self.direction = 2 if keys[pygame.K_UP] else 0
-            self.vy = 10 * k if keys[pygame.K_DOWN] else -10 * k
+            self.vy = 10 if keys[pygame.K_DOWN] else -10
             self.rect.y += self.vy \
                 if not pygame.sprite.spritecollideany(self, horizontal_borders,
                                                       collided=pygame.sprite.collide_mask) else 0
@@ -205,14 +234,13 @@ class Tasks(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.save_y = self.rect.y
-        self.upd = 0
+        self.mask = pygame.mask.from_surface(self.image)
 
     def update(self):
         global collected_tasks
         global millisec
 
-        if pygame.sprite.spritecollideany(self, character):
+        if pygame.sprite.spritecollideany(self, character, collided=pygame.sprite.collide_mask):
             collected_tasks += 1
             millisec += 30
             self.kill()
@@ -322,8 +350,8 @@ WrongAnswer(200, 100)
 player = Character(388, 268)
 camera = Camera()
 
-# create all possible coord
-tasks_coords = [(X + 100, Y + 100)]
+tasks_coords = [(X + 200, Y + 200), (X + 1000, Y + 250), (X + 700, Y + 400), (X + 2500, Y + 350),
+                (X + 1500, Y + 300), (X + 1200, Y + 250)]
 for t in tasks_coords:
     Tasks(*t)
 
@@ -348,8 +376,9 @@ while running:
 
     clock.tick(FPS)
     millisec += 1
-    print(millisec % 60, millisec // 60)
-
     show_time(millisec)
+    show_points(collected_tasks, millisec)
 
     pygame.display.flip()
+
+    running = time_check(millisec)
