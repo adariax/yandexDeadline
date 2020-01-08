@@ -4,13 +4,16 @@ from func import load_image
 from coords import create_borders_coords
 
 pygame.init()
+pygame.font.init()
+
 WIDTH = 800
 HEIGHT = 400
 X = - WIDTH // 2
 Y = - HEIGHT // 2
 size = (WIDTH, HEIGHT)
 screen = pygame.display.set_mode(size)
-screen.fill((100, 100, 100))
+pygame.display.set_caption('Deadline')
+screen.fill((0, 0, 0))
 
 running = True
 MOVEEVENT = 30
@@ -19,6 +22,7 @@ GOEVENT = 31
 pygame.time.set_timer(GOEVENT, 15)
 pygame.time.set_timer(MOVEEVENT, 100)
 clock = pygame.time.Clock()
+millisec = 0
 
 FPS = 20
 all_sprites = pygame.sprite.Group()
@@ -29,6 +33,31 @@ horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 collected_tasks = 0
+
+
+def time_left(time):
+    left_millisec = 1440 - time
+    return (left_millisec % 60, left_millisec // 60)
+
+
+def show_time(time):  # ДОПИСАТЬ БЛЯ
+    minutes, hours = time_left(time)
+    line = f'{hours}:{minutes}'
+    font = pygame.font.SysFont(None, 30)
+    text_coord = 600
+
+    fon = pygame.transform.scale(load_image('data\\fon.png'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    # font = pygame.font.Font(None, 30)
+    # text_coord = 50
+
+    string_rendered = font.render(line, 1, pygame.Color('black'))
+    intro_rect = string_rendered.get_rect()
+    text_coord += 10
+    intro_rect.top = text_coord
+    intro_rect.x = 10
+    text_coord += intro_rect.height
+    screen.blit(string_rendered, intro_rect)
 
 
 class Map(pygame.sprite.Sprite):
@@ -103,13 +132,13 @@ class Character(pygame.sprite.Sprite):
             self.direction = 1 if keys[pygame.K_LEFT] else 3
             self.vx = -10 if keys[pygame.K_LEFT] else 10
             self.rect.x += self.vx if not pygame.sprite.spritecollideany(self, vertical_borders,
-                                             collided=pygame.sprite.collide_mask) else 0
+                                                                         collided=pygame.sprite.collide_mask) else 0
             moving = True
         elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
             self.direction = 2 if keys[pygame.K_UP] else 0
             self.vy = 10 if keys[pygame.K_DOWN] else -10
             self.rect.y += self.vy if not pygame.sprite.spritecollideany(self, horizontal_borders,
-                                             collided=pygame.sprite.collide_mask) else 0
+                                                                         collided=pygame.sprite.collide_mask) else 0
             moving = True
 
         while pygame.sprite.spritecollideany(self, vertical_borders,
@@ -243,7 +272,7 @@ while running:
     for sprite in all_sprites:
         camera.apply(sprite)
 
-    screen.fill((100, 100, 100))
+    screen.fill((0, 0, 0))
 
     all_sprites.draw(screen)
     vertical_borders.draw(screen)
@@ -251,4 +280,9 @@ while running:
     character.draw(screen)
 
     pygame.display.flip()
+
     clock.tick(FPS)
+    millisec += 1
+    print(millisec % 60, millisec // 60)
+
+    show_time(millisec)
