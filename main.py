@@ -40,24 +40,16 @@ def time_left(time):
     return (left_millisec % 60, left_millisec // 60)
 
 
-def show_time(time):  # ДОПИСАТЬ БЛЯ
+def show_time(time):
     minutes, hours = time_left(time)
-    line = f'{hours}:{minutes}'
-    font = pygame.font.SysFont(None, 30)
-    text_coord = 600
+    line = f'{hours}:{str(minutes) if minutes >= 10 else str(0) + str(minutes)}'
+    font1 = pygame.font.Font(None, 33)
+    font2 = pygame.font.Font(None, 30)
 
-    fon = pygame.transform.scale(load_image('data\\fon.png'), (WIDTH, HEIGHT))
-    screen.blit(fon, (0, 0))
-    # font = pygame.font.Font(None, 30)
-    # text_coord = 50
-
-    string_rendered = font.render(line, 1, pygame.Color('black'))
-    intro_rect = string_rendered.get_rect()
-    text_coord += 10
-    intro_rect.top = text_coord
-    intro_rect.x = 10
-    text_coord += intro_rect.height
-    screen.blit(string_rendered, intro_rect)
+    string_rendered1 = font1.render(line, True, pygame.Color(63, 40, 60))
+    string_rendered2 = font2.render(line, True, pygame.Color(255, 0, 68))
+    screen.blit(string_rendered1, (698, 350))
+    screen.blit(string_rendered2, (700, 350))
 
 
 class Map(pygame.sprite.Sprite):
@@ -301,14 +293,14 @@ while running:
     for sprite in all_sprites:
         camera.apply(sprite)
 
-    screen.fill((0, 0, 0))
+    screen.fill((93, 44, 40))
 
     all_sprites.draw(screen)
-
-    pygame.display.flip()
 
     clock.tick(FPS)
     millisec += 1
     print(millisec % 60, millisec // 60)
 
     show_time(millisec)
+
+    pygame.display.flip()
