@@ -1,7 +1,7 @@
 import pygame
 import sys
 from random import choice
-from func import load_image
+from func import load_image, get_highscore, get_points, save_results, time_check, time_left
 from coords import create_borders_coords, create_tasks_coords, create_mobs_coords
 
 pygame.init()
@@ -15,16 +15,15 @@ screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Deadline')
 screen.fill((0, 0, 0))
 
-running = True
 MOVEEVENT = 30
 GOEVENT = 31
 
 pygame.time.set_timer(GOEVENT, 15)
 pygame.time.set_timer(MOVEEVENT, 100)
 clock = pygame.time.Clock()
-millisec = 0
 
 FPS = 20
+
 all_sprites = pygame.sprite.Group()
 tasks = pygame.sprite.Group()
 character = pygame.sprite.Group()
@@ -32,8 +31,16 @@ enemies = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
+POINTS = 3000
+TIME = 1440
+
+HIGHSCORE = get_highscore()
+
 collected_tasks = 0
-points = 3000
+millisec = 0
+
+running = True
+WIN = False
 
 
 def terminate():
@@ -93,17 +100,8 @@ def endgame_screen():  # ДОПИСАТЬ
         pygame.display.flip()
 
 
-def time_check(time):
-    return True if time < 1440 else False
-
-
-def time_left(time):
-    left_millisec = 1440 - time
-    return (left_millisec % 60, left_millisec // 60)
-
-
 def show_time(time):
-    minutes, hours = time_left(time)
+    minutes, hours = time_left(time, TIME)
     line = f'{hours}:{str(minutes) if minutes >= 10 else str(0) + str(minutes)}'
     font1 = pygame.font.Font(None, 33)
     font2 = pygame.font.Font(None, 30)
@@ -114,17 +112,20 @@ def show_time(time):
     screen.blit(string_rendered2, (700, 350))
 
 
-def get_points(tasks, time):
-    global points
-    return points + tasks * 300 - time * 5
-
-
 def show_points(tasks, time):
-    line = f'points: {get_points(tasks, time)}'
+    line = f'points: {get_points(tasks, time, POINTS)}'
+    font = pygame.font.Font(None, 33)
+
+    string_rendered = font.render(line, True, pygame.Color(18, 78, 137))
+    screen.blit(string_rendered, (60, 350))
+
+
+def show_highscore(highscore):
+    line = f'HIGHSCORE: {highscore}'
     font = pygame.font.Font(None, 33)
 
     string_rendered = font.render(line, True, pygame.Color(38, 43, 68))
-    screen.blit(string_rendered, (60, 350))
+    screen.blit(string_rendered, (200, 350))
 
 
 def furniture_generation():
@@ -384,7 +385,9 @@ class Computer(InteriorItems):
         super().__init__(x, y, 'computer.png')
 
     def update(self, *args):
-        pass
+        global WIN
+        if pygame.sprite.spritecollideany(self, player, collided=pygame.sprite.collide_mask):
+            WIN = True
 
 
 class Sofa(InteriorItems):
@@ -546,9 +549,13 @@ while running:
 
     clock.tick(FPS)
     millisec += 1
+
     show_time(millisec)
     show_points(collected_tasks, millisec)
+    show_highscore(HIGHSCORE)
 
     pygame.display.flip()
 
-    running = time_check(millisec)
+    running = time_check(millisec, TIME)
+
+save_results(get_points(collected_tasks, millisec, POINTS), HIGHSCORE)
