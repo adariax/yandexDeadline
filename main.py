@@ -53,11 +53,12 @@ def start_screen():
                   '',
                   "Упрвление стрелками;",
                   "чтобы собрать задачу, достаточно подойти к ней.",
+                  "Для включения/выключения музыки нажмите пробел",
                   '',
                   "ДЛЯ НАЧАЛА НАЖМИТЕ ЛЮБУЮ КНОПКУ"]
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 30)
-    text_coord = 30
+    text_coord = 25
     for line in intro_text:
         string_rendered = font.render(line, 1, pygame.Color(246, 200, 159))
         intro_rect = string_rendered.get_rect()
@@ -391,7 +392,7 @@ class Sofa(InteriorItems):
         super().__init__(x, y, 'sofa.png')
 
 
-class Kitchen():
+class Kitchen:
     def __init__(self):
         InteriorItems(1424, 28, 'kitchen2.png')
         InteriorItems(1424, 174, 'kitchen1.png')
@@ -517,6 +518,10 @@ tasks_mobs_generation(map_level.rect.x, map_level.rect.y)
 
 player = Character(388, 268)
 
+sound = pygame.mixer.Sound('data\\music.wav')
+sound.play()
+music = True
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -525,6 +530,9 @@ while running:
             tasks.update()
         if event.type == GOEVENT:
             enemies.update()
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            sound.stop() if music else sound.play()
+            music = not music
 
     character.update()
 
