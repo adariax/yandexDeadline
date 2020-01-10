@@ -4,8 +4,10 @@ from random import choice
 from func import load_image, get_highscore, get_points, save_results, time_check, time_left
 from coords import create_borders_coords, create_tasks_coords, create_mobs_coords
 
+# launch constructor of PyGame
 pygame.init()
 
+# window characteristics
 WIDTH = 800
 HEIGHT = 400
 X = - WIDTH // 2
@@ -15,15 +17,14 @@ screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Deadline')
 screen.fill((0, 0, 0))
 
-MOVEEVENT = 30
-GOEVENT = 31
-
+GOEVENT = 30  # event for moving enemies
 pygame.time.set_timer(GOEVENT, 15)
-pygame.time.set_timer(MOVEEVENT, 100)
-clock = pygame.time.Clock()
 
-FPS = 20
+clock = pygame.time.Clock()  # makes count time possible
 
+FPS = 20  # Frames Per Second
+
+# create all sprite group
 all_sprites = pygame.sprite.Group()
 tasks = pygame.sprite.Group()
 character = pygame.sprite.Group()
@@ -31,19 +32,20 @@ enemies = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
-POINTS = 3000
-TIME = 1440
+# game's constants
+POINTS = 3000  # start points
+TIME = 1440  # all time
 
-HIGHSCORE = get_highscore()
+HIGHSCORE = get_highscore()  # get highscore from file
 
-collected_tasks = 0
-millisec = 0
+collected_tasks = 0  # var for collected task
+millisec = 0  # var for left time
 
-running = True
-WIN = False
+running = True  # main game loop
+WIN = False  # flag for win game
 
 
-def terminate():
+def terminate():  # exit game function
     pygame.quit()
     sys.exit()
 
@@ -100,7 +102,7 @@ def endgame_screen():  # ДОПИСАТЬ
         pygame.display.flip()
 
 
-def show_time(time):
+def show_time(time):  # show time on game screen
     minutes, hours = time_left(time, TIME)
     line = f'{hours}:{str(minutes) if minutes >= 10 else str(0) + str(minutes)}'
     font1 = pygame.font.Font(None, 33)
@@ -112,7 +114,7 @@ def show_time(time):
     screen.blit(string_rendered2, (700, 350))
 
 
-def show_points(tasks, time):
+def show_points(tasks, time):  # show current points on main game screen
     line = f'points: {get_points(tasks, time, POINTS)}'
     font = pygame.font.Font(None, 33)
 
@@ -120,7 +122,7 @@ def show_points(tasks, time):
     screen.blit(string_rendered, (60, 350))
 
 
-def show_highscore(highscore):
+def show_highscore(highscore):  # show highscore from file data\\highscore.sc
     line = f'HIGHSCORE: {highscore}'
     font = pygame.font.Font(None, 33)
 
@@ -128,7 +130,7 @@ def show_highscore(highscore):
     screen.blit(string_rendered, (200, 350))
 
 
-def furniture_generation():
+def furniture_generation():  # furniture placement by static coords
     for coord_x in [324, 2548, 1760, 2076]:
         Window(coord_x, 50)
 
@@ -149,15 +151,15 @@ def furniture_generation():
     BigTable(1910, 140)
     Sofa(2280, 130)
 
-    for coord in [504, 834, 974, 1398, 2444]:
-        Walllamp(coord, 228)
+    for coord_x in [504, 834, 974, 1398, 2444]:
+        Walllamp(coord_x, 228)
 
     for coord_x in [1310, 150, 2474]:
         Pictures(coord_x, 50)
 
     Carpet(2554, 160, 'orangecarpet.png')
-    Carpet(700, 200, 'bluecarpet.png')
-    Carpet(870, 200, 'bluecarpet.png')
+    for coord_x in [700, 870]:
+        Carpet(coord_x, 200, 'bluecarpet.png')
 
     Wash(532, 100)
     Bath(700, 50)
@@ -170,7 +172,7 @@ def furniture_generation():
         Chest(*coords)
 
 
-def tasks_mobs_generation(X, Y):
+def tasks_mobs_generation(X, Y):  # tasks placement and mobs generation; coords from file coords.py
     borders_coords = create_borders_coords(X, Y)
     for b in borders_coords:
         Border(*b)
@@ -188,12 +190,11 @@ def tasks_mobs_generation(X, Y):
         RuntimeError(*m3)
 
 
-class Map(pygame.sprite.Sprite):
+class Map(pygame.sprite.Sprite):  # create map for level
     def __init__(self):
         super().__init__(all_sprites)
 
         self.image = pygame.Surface([0, 0])
-        self.image = load_image('data\\map\\map.png')
         self.image = pygame.transform.scale(load_image('data\\map\\map.png'), (3000, 506))
 
         self.rect = self.image.get_rect()
@@ -201,39 +202,38 @@ class Map(pygame.sprite.Sprite):
         self.rect.y = - HEIGHT // 2
 
 
-class Camera:
-    # зададим начальный сдвиг камеры
+class Camera:  # creates camera for game, which move all obj in apply except for target in update
     def __init__(self):
         self.dx = 0
         self.dy = 0
 
-    # сдвинуть объект obj на смещение камеры
     def apply(self, obj):
         obj.rect.x += self.dx
         obj.rect.y += self.dy
 
-    # позиционировать камеру на объекте target
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
-class Character(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+class Character(pygame.sprite.Sprite):  # class for player
+    def __init__(self, x, y):  # create sprite on screen in x, y coords
         super().__init__(all_sprites)
         self.add(character)
         self.x = x
         self.y = y
-        self.frames = 11
+        self.frames = 11  # animation len animation
+        # start speed
         self.vx = 0
         self.vy = 0
 
-        self.direction = 0
-        self.cur_frame = 0
-        self.images_standing = [[], [], [], []]
-        self.images_walking = [[], [], [], []]
+        self.direction = 0  # start direction
         # forward - 0, left - 1, back - 2, right - 3
-        for status in ('standing', 'walking'):
+        self.cur_frame = 0  # current frame of animation
+        self.images_standing = [[], [], [], []]  # list of images for standing with 4 direction
+        self.images_walking = [[], [], [], []]  # list of images for walking with 4 direction
+
+        for status in ('standing', 'walking'):  # makes list of images full
             for direction in range(4):
                 for number_file in range(11):
                     path = f'data\\character\\{status}\\{str(direction)}\\{number_file + 1}.png'
@@ -242,10 +242,10 @@ class Character(pygame.sprite.Sprite):
                                                    (image.get_rect().w * 2, image.get_rect().h * 2))
                     eval(f'self.images_{status}[direction].append(image)')
 
-        self.image = self.images_standing[0][self.cur_frame]
-        self.rect = self.image.get_rect()
-        self.mask = pygame.mask.Mask((self.rect.w, self.rect.h), False)
-        for x in range(self.rect.w // 5, self.rect.w // 5 * 4):
+        self.image = self.images_standing[0][self.cur_frame]  # image for start game
+        self.rect = self.image.get_rect()  # permanent rect
+        self.mask = pygame.mask.Mask((self.rect.w, self.rect.h), False)  # create mask on player's
+        for x in range(self.rect.w // 7, self.rect.w // 7 * 6):  # feet only
             for y in range(self.rect.h // 9 * 8, self.rect.h):
                 self.mask.set_at((x, y), 1)
 
@@ -253,40 +253,37 @@ class Character(pygame.sprite.Sprite):
         self.vx = 0
         self.vy = 0
 
-        keys = pygame.key.get_pressed()
-        moving = False
+        keys = pygame.key.get_pressed()  # get all pressed keys
+        moving = False  # flag for change standing sprite to walking
 
         global millisec
         if pygame.sprite.spritecollideany(self, enemies, collided=pygame.sprite.collide_mask):
             millisec += 3
 
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
-            self.direction = 1 if keys[pygame.K_LEFT] else 3
-            self.vx = -10 if keys[pygame.K_LEFT] else 10
-            self.rect.x += self.vx \
-                if not pygame.sprite.spritecollideany(self, vertical_borders,
-                                                      collided=pygame.sprite.collide_mask) else 0
-            moving = True
+            self.direction = 1 if keys[pygame.K_LEFT] else 3  # change direction
+            self.vx = -10 if self.direction == 1 else 10  # change speed by direction
+            self.rect.x += self.vx  # change x coord
+            moving = True  # on 257 str
 
-            while pygame.sprite.spritecollideany(self, vertical_borders,
+            while pygame.sprite.spritecollideany(self, vertical_borders,  # remove collide
                                                  collided=pygame.sprite.collide_mask):
                 self.rect.x += 1 if self.vx <= 0 else -1
 
         elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
-            self.direction = 2 if keys[pygame.K_UP] else 0
-            self.vy = 10 if keys[pygame.K_DOWN] else -10
-            self.rect.y += self.vy \
-                if not pygame.sprite.spritecollideany(self, horizontal_borders,
-                                                      collided=pygame.sprite.collide_mask) else 0
-            moving = True
+            self.direction = 2 if keys[pygame.K_UP] else 0  # change direction
+            self.vy = 10 if self.direction == 0 else -10  # change speed by direction
+            self.rect.y += self.vy  # change y coord
+            moving = True  # on 257 str
 
-            while pygame.sprite.spritecollideany(self, horizontal_borders,
+            while pygame.sprite.spritecollideany(self, horizontal_borders,  # remove collide
                                                  collided=pygame.sprite.collide_mask):
                 self.rect.y += 1 if self.vy <= 0 else -1
 
+        # change image (animation)
         self.image = self.images_standing[self.direction][self.cur_frame % self.frames] \
             if not moving else self.images_walking[self.direction][self.cur_frame % self.frames]
-        self.cur_frame += 1
+        self.cur_frame += 1  # change count frame for animation
 
 
 class Tasks(pygame.sprite.Sprite):
@@ -519,7 +516,7 @@ furniture_generation()
 
 tasks_mobs_generation(map_level.rect.x, map_level.rect.y)
 
-player = Character(388, 268)
+player = Character(0, 0)
 
 sound = pygame.mixer.Sound('data\\music.wav')
 sound.play()
@@ -529,14 +526,13 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             terminate()
-        if event.type == MOVEEVENT:
-            tasks.update()
         if event.type == GOEVENT:
             enemies.update()
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             sound.stop() if music else sound.play()
             music = not music
 
+    tasks.update()
     character.update()
 
     camera.update(player)
