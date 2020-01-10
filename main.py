@@ -260,7 +260,7 @@ class Character(pygame.sprite.Sprite):  # class for player
         if pygame.sprite.spritecollideany(self, enemies, collided=pygame.sprite.collide_mask):
             millisec += 3
 
-        if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:
+        if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:  # ^ = xor
             self.direction = 1 if keys[pygame.K_LEFT] else 3  # change direction
             self.vx = -10 if self.direction == 1 else 10  # change speed by direction
             self.rect.x += self.vx  # change x coord
@@ -270,7 +270,7 @@ class Character(pygame.sprite.Sprite):  # class for player
                                                  collided=pygame.sprite.collide_mask):
                 self.rect.x += 1 if self.vx <= 0 else -1
 
-        elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:
+        elif keys[pygame.K_UP] ^ keys[pygame.K_DOWN]:  # ^ = xor
             self.direction = 2 if keys[pygame.K_UP] else 0  # change direction
             self.vy = 10 if self.direction == 0 else -10  # change speed by direction
             self.rect.y += self.vy  # change y coord
@@ -287,13 +287,12 @@ class Character(pygame.sprite.Sprite):  # class for player
 
 
 class Tasks(pygame.sprite.Sprite):
-    image = load_image(f"data\\tasks\\{choice(['task_1.png', 'task_2.png', 'task_3.png'])}",
-                       (0, 0, 0))
 
-    def __init__(self, x, y):
+    def __init__(self, x, y):  # create task sprite on screen on x, y coords
         super().__init__(all_sprites)
         self.add(tasks)
-        self.image = Tasks.image
+        self.image = load_image(f"data\\tasks\\"  # random image of task
+                                f"{choice(['task_1.png', 'task_2.png', 'task_3.png'])}", (0, 0, 0))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -302,7 +301,7 @@ class Tasks(pygame.sprite.Sprite):
     def update(self):
         global collected_tasks
         global millisec
-
+        # after collide with player, collected tasks increase of 1 and task disappear
         if pygame.sprite.spritecollideany(self, character, collided=pygame.sprite.collide_mask):
             collected_tasks += 1
             millisec += 2
@@ -310,33 +309,35 @@ class Tasks(pygame.sprite.Sprite):
 
 
 class Border(pygame.sprite.Sprite):
-    # строго вертикальный или строго горизонтальный отрезок
+    # create only horizontal or vertical border
     def __init__(self, x1, y1, x2, y2):
         super().__init__(all_sprites)
-        if x1 == x2:  # вертикальная стенка
+        if x1 == x2:  # vertical border
             self.add(vertical_borders)
             self.image = pygame.Surface([1, y2 - y1])
             self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
             self.mask = pygame.mask.Mask((1, y2 - y1), True)
-        else:  # горизонтальная стенка
+        else:  # horizontal border
             self.add(horizontal_borders)
             self.image = pygame.Surface([x2 - x1, 1])
             self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
             self.mask = pygame.mask.Mask((x2 - x1, 1), True)
-        self.image.set_alpha(0)
+        self.image.set_alpha(0)  # makes border invisible
 
 
 class InteriorItems(pygame.sprite.Sprite):
+    # parent class for all furniture
     def __init__(self, x, y, name, bottom_top_y=150, borders=True):
         super().__init__(all_sprites)
-        image = load_image('data\\furniture\\' + name)
+        image = load_image('data\\furniture\\' + name)  # load picture
+        # and increases it in 2 times
         self.image = pygame.transform.scale(image, (image.get_rect().w * 2, image.get_rect().h * 2))
         self.rect = self.image.get_rect()
         self.rect.x = X + x
         self.rect.y = Y + y
-        self.bottom_top_y = Y + bottom_top_y
+        self.bottom_top_y = Y + bottom_top_y  # top y coord of borders for collide
 
-        if borders:
+        if borders:  # create borders for collide events
             Border(self.rect.x, self.bottom_top_y,
                    self.rect.x, self.rect.y + self.rect.h)
             Border(self.rect.x, self.bottom_top_y,
@@ -345,6 +346,9 @@ class InteriorItems(pygame.sprite.Sprite):
                    self.rect.x + self.rect.w, self.rect.y + self.rect.h)
             Border(self.rect.x + self.rect.w, self.bottom_top_y,
                    self.rect.x + self.rect.w, self.rect.y + self.rect.h)
+
+
+# furniture classes
 
 
 class Bath(InteriorItems):
@@ -381,7 +385,7 @@ class Computer(InteriorItems):
     def __init__(self, x, y):
         super().__init__(x, y, 'computer.png')
 
-    def update(self, *args):
+    def update(self):  # makes closing deadline possible
         global WIN
         if pygame.sprite.spritecollideany(self, player, collided=pygame.sprite.collide_mask):
             WIN = True
@@ -444,17 +448,20 @@ class Pictures(InteriorItems):
 
 
 class Enemy(pygame.sprite.Sprite):
+    # parent class for all furniture
     def __init__(self, x, y, name):
         super().__init__(all_sprites)
-        self.add(enemies)
-        image = load_image('data\\mobs\\' + name)
+        self.add(enemies)  # add to enemies sprite group
+        image = load_image('data\\mobs\\' + name)  # load image
         self.image = pygame.transform.scale(image, (image.get_rect().w * 2, image.get_rect().h * 2))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+        # start speed
         self.vx = 2
         self.vy = 3
 
+        # make mask for 1/7 of height
         self.mask = pygame.mask.Mask((self.rect.w, self.rect.h), False)
         for x in range(self.rect.w):
             for y in range(self.rect.h // 7 * 6, self.rect.h):
@@ -466,7 +473,7 @@ class CompilationError(Enemy):
         super().__init__(width, height, "mob_1.png")
         self.vy = 0
 
-    def update(self):
+    def update(self):  # walk right-left
         self.rect = self.rect.move(self.vx, 0)
         if pygame.sprite.spritecollideany(self, vertical_borders,
                                           collided=pygame.sprite.collide_mask):
@@ -477,19 +484,19 @@ class RuntimeError(Enemy):
     def __init__(self, width, height):
         super().__init__(width, height, "mob_3.png")
 
-    def update(self):
-        change = False
+    def update(self):  # start walk to top-right corner, when bounce off borders
+        change = False  # flag to change vector of speed
         self.rect.y += self.vy
-        while pygame.sprite.spritecollideany(self, horizontal_borders,
-                                          collided=pygame.sprite.collide_mask):
+        while pygame.sprite.spritecollideany(self, horizontal_borders,  # remove collide
+                                             collided=pygame.sprite.collide_mask):
             self.rect.y += 3 if self.vy <= 0 else -3
             change = True
         self.vy = -self.vy if change else self.vy
 
         change = False
         self.rect.x += self.vx
-        while pygame.sprite.spritecollideany(self, vertical_borders,
-                                          collided=pygame.sprite.collide_mask):
+        while pygame.sprite.spritecollideany(self, vertical_borders,  # remove collide
+                                             collided=pygame.sprite.collide_mask):
             self.rect.x += 2 if self.vx <= 0 else -2
             change = True
         self.vx = -self.vx if change else self.vx
@@ -500,24 +507,25 @@ class WrongAnswer(Enemy):
         super().__init__(width, height, "mob_2.png")
         self.vx = 0
 
-    def update(self):
+    def update(self):  # walk up-down
         self.rect = self.rect.move(0, self.vy)
         if pygame.sprite.spritecollideany(self, horizontal_borders,
                                           collided=pygame.sprite.collide_mask):
             self.vy = -self.vy
 
 
-start_screen()
+start_screen()  # load start screen
 
 camera = Camera()
 map_level = Map()
 
-furniture_generation()
+furniture_generation()  # load all furtiture
 
-tasks_mobs_generation(map_level.rect.x, map_level.rect.y)
+tasks_mobs_generation(map_level.rect.x, map_level.rect.y)  # load tasks adn mobs
 
 player = Character(0, 0)
 
+# create sound
 sound = pygame.mixer.Sound('data\\music.wav')
 sound.play()
 music = True
@@ -535,7 +543,7 @@ while running:
     tasks.update()
     character.update()
 
-    camera.update(player)
+    camera.update(player)  # move all sprites with respect to a player
     for sprite in all_sprites:
         camera.apply(sprite)
 
@@ -546,12 +554,13 @@ while running:
     clock.tick(FPS)
     millisec += 1
 
+    # show information on screen
     show_time(millisec)
     show_points(collected_tasks, millisec)
     show_highscore(HIGHSCORE)
 
     pygame.display.flip()
 
-    running = time_check(millisec, TIME)
+    running = time_check(millisec, TIME)  # end game if time ended
 
-save_results(get_points(collected_tasks, millisec, POINTS), HIGHSCORE)
+save_results(get_points(collected_tasks, millisec, POINTS), HIGHSCORE)  # update highscore

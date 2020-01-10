@@ -2,9 +2,8 @@ import os
 import pygame
 
 
-def load_image(name, colorkey=None):
-    fullname = os.path.join(name)
-    image = pygame.image.load(fullname)
+def load_image(name, colorkey=None):  # load image by name
+    image = pygame.image.load(name)
     if colorkey is not None:
         if colorkey == -1:
             colorkey = image.get_at((0, 0))
@@ -14,26 +13,26 @@ def load_image(name, colorkey=None):
     return image
 
 
-def get_highscore():
+def get_highscore():  # read and return highscore from file
     with open('data\\highscore.sc', 'r') as f:
         read_data = f.read()
     return int(read_data)
 
 
-def save_results(points, highscore):
+def save_results(points, highscore):  # check score and write new highscore
     if points > highscore:
         with open('data\\highscore.sc', 'w') as f:
             f.write(str(points))
 
 
-def time_check(current_time, all_time):
+def time_check(current_time, all_time):  # retuurn False if time left
     return True if current_time < all_time else False
 
 
-def time_left(current_time, all_time):
+def time_left(current_time, all_time):  # return left 'hours' and 'minutes'
     left_millisec = all_time - current_time
     return (left_millisec % 60, left_millisec // 60)
 
 
-def get_points(tasks, time, points):
+def get_points(tasks, time, points):  # return current points
     return points + tasks * 300 - time * 5
