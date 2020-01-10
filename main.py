@@ -30,6 +30,7 @@ character = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
+computer = pygame.sprite.Group()
 
 # game's constants
 POINTS = 3000  # start points
@@ -56,7 +57,7 @@ class InfoScreen:
         self.font = pygame.font.Font(None, 30)
         self.add_text(list_of_strings)
 
-    def add_text(self, list_of_strings):
+    def add_text(self, list_of_strings):  # add info text
         text_coord = 15
         for line in list_of_strings:
             string_rendered = self.font.render(line, 1, pygame.Color(246, 200, 159))
@@ -67,7 +68,7 @@ class InfoScreen:
             text_coord += intro_rect.height
             screen.blit(string_rendered, intro_rect)
 
-    def show(self):
+    def show(self):  # show info while player don't push any button
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -78,7 +79,7 @@ class InfoScreen:
             clock.tick(FPS)
 
 
-class StartScreen(InfoScreen):
+class StartScreen(InfoScreen):  # for showing info before start
     def __init__(self):
         super().__init__(['DEADLINE',
                           '',
@@ -94,15 +95,15 @@ class StartScreen(InfoScreen):
                           "ДЛЯ НАЧАЛА НАЖМИТЕ ЛЮБУЮ КНОПКУ"])
 
 
-class FinishScreen(InfoScreen):
+class FinishScreen(InfoScreen):  # for showing endgame info
     def __init__(self, tasks, time, points, hs):
-        global WIN
+        global WIN  # if player reached computer
         super().__init__(['ИГРА ОКОНЧЕНА',
                           '',
                           "Вы набрали:",
                           f"{get_points(tasks, time, points) + (1000 if WIN else 0)} очков",
                           "",
-                          f"1000 бонусных очков за сдачу (вы дошли до компьютера)" if WIN
+                          f"1000 бонусных очков за сдачу" if WIN
                           else 'В следующий раз дойдите до компьютера',
                           '',
                           '',
@@ -202,6 +203,15 @@ def tasks_mobs_generation(X, Y):  # tasks placement and mobs generation; coords 
 
 
 def generation_game():
+    character.empty()
+    computer.empty()
+    enemies.empty()
+    vertical_borders.empty()
+    horizontal_borders.empty()
+    tasks.empty()
+    all_sprites.empty()
+
+    map_level = Map()
     furniture_generation()  # load all furniture
 
     tasks_mobs_generation(map_level.rect.x, map_level.rect.y)  # load tasks adn mobs
@@ -212,7 +222,7 @@ def generation_game():
     sound = pygame.mixer.Sound('data\\music.wav')
     sound.play()
     music = True
-    return (player, sound, music)
+    return (map_level, player, sound, music)
 
 
 class Map(pygame.sprite.Sprite):  # create map for level
@@ -409,10 +419,11 @@ class Chest(InteriorItems):
 class Computer(InteriorItems):
     def __init__(self, x, y):
         super().__init__(x, y, 'computer.png')
+        self.add(computer)
 
     def update(self):  # makes closing deadline possible
         global WIN
-        if pygame.sprite.spritecollideany(self, player):
+        if pygame.sprite.spritecollideany(self, character):
             WIN = True
 
 
@@ -543,9 +554,8 @@ start = StartScreen()  # load start screen
 start.show()
 
 camera = Camera()
-map_level = Map()
 
-player, sound, music = generation_game()
+map_level, player, sound, music = generation_game()
 
 while running:
     for event in pygame.event.get():
@@ -559,6 +569,7 @@ while running:
 
     tasks.update()
     character.update()
+    computer.update()
 
     camera.update(player)  # move all sprites with respect to a player
     for sprite in all_sprites:
@@ -579,13 +590,14 @@ while running:
     pygame.display.flip()
 
     running = time_check(millisec, TIME)  # end game if time ended
-    if not running or WIN:
+    if not running or WIN:  # if the player reached the computer or time ended
         finish = FinishScreen(collected_tasks, millisec, POINTS, HIGHSCORE)
-        finish.show()
+        finish.show()  # endgame screen
         save_results(get_points(collected_tasks, millisec, POINTS), HIGHSCORE)  # update highscore
-        player.kill()
-        player, sound, music = generation_game()
+
+        map_level, player, sound, music = generation_game()  # regenerate level
+
         millisec = 0
         collected_tasks = 0
         running = True
-
+        WIN = False
