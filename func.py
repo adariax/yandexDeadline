@@ -1,4 +1,3 @@
-import os
 import pygame
 
 
@@ -23,6 +22,7 @@ def save_results(points, highscore):  # check score and write new highscore
     if points > highscore:
         with open('data\\highscore.sc', 'w') as f:
             f.write(str(points))
+        return True
 
 
 def time_check(current_time, all_time):  # retuurn False if time left

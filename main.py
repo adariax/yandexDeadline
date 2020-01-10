@@ -1,8 +1,7 @@
-import pygame
 import sys
 from random import choice
-from func import load_image, get_highscore, get_points, save_results, time_check, time_left
-from coords import create_borders_coords, create_tasks_coords, create_mobs_coords
+from func import *
+from coords import *
 
 # launch constructor of PyGame
 pygame.init()
@@ -50,56 +49,68 @@ def terminate():  # exit game function
     sys.exit()
 
 
-def start_screen():
-    fon = pygame.transform.scale(load_image('data\\screen.jpg'), (WIDTH, HEIGHT))
-    screen.blit(fon, (0, 0))
-    intro_text = ['DEADLINE',
-                  '',
-                  "Соберите все задачи до того, как закончится время",
-                  "Но будьте осоторжны! Не наткнитесь на ошибки:",
-                  "они отнимают ваши драгоценные секунды",
-                  "Не забудьте сдать все задачи, дойдя до компьютера",
-                  '',
-                  "Упрвление стрелками;",
-                  "чтобы собрать задачу, достаточно подойти к ней.",
-                  "Для включения/выключения музыки нажмите пробел",
-                  '',
-                  "ДЛЯ НАЧАЛА НАЖМИТЕ ЛЮБУЮ КНОПКУ"]
-    screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 30)
-    text_coord = 25
-    for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color(246, 200, 159))
-        intro_rect = string_rendered.get_rect()
-        text_coord += 10
-        intro_rect.top = text_coord
-        intro_rect.x = 10
-        text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
+class InfoScreen:
+    def __init__(self, list_of_strings):
+        self.fon = pygame.transform.scale(load_image('data\\screen.jpg'), (WIDTH, HEIGHT))
+        screen.blit(self.fon, (0, 0))
+        self.font = pygame.font.Font(None, 30)
+        self.add_text(list_of_strings)
 
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                return  # начинаем игру
-        pygame.display.flip()
-        clock.tick(FPS)
+    def add_text(self, list_of_strings):
+        text_coord = 15
+        for line in list_of_strings:
+            string_rendered = self.font.render(line, 1, pygame.Color(246, 200, 159))
+            intro_rect = string_rendered.get_rect()
+            text_coord += 10
+            intro_rect.top = text_coord
+            intro_rect.x = 10
+            text_coord += intro_rect.height
+            screen.blit(string_rendered, intro_rect)
+
+    def show(self):
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                    return
+            pygame.display.flip()
+            clock.tick(FPS)
 
 
-def endgame_screen():  # ДОПИСАТЬ
-    fon = pygame.transform.scale(load_image('data\\screen.jpg'), (WIDTH, HEIGHT))
-    screen.blit(fon, (0, 0))
-    line = 'GAME OVER'
-    font1 = pygame.font.Font(None, 50)
-    string_rendered1 = font1.render(line, True, pygame.Color(63, 40, 60))
-    screen.blit(string_rendered1, (698, 350))
+class StartScreen(InfoScreen):
+    def __init__(self):
+        super().__init__(['DEADLINE',
+                          '',
+                          "Соберите все задачи до того, как закончится время",
+                          "Но будьте осоторжны! Не наткнитесь на ошибки:",
+                          "они отнимают ваши драгоценные секунды",
+                          "Не забудьте сдать все задачи, дойдя до компьютера",
+                          '',
+                          "Упрвление стрелками;",
+                          "чтобы собрать задачу, достаточно подойти к ней.",
+                          "Для включения/выключения музыки нажмите пробел",
+                          '',
+                          "ДЛЯ НАЧАЛА НАЖМИТЕ ЛЮБУЮ КНОПКУ"])
 
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-        pygame.display.flip()
+
+class FinishScreen(InfoScreen):
+    def __init__(self, tasks, time, points, hs):
+        global WIN
+        super().__init__(['ИГРА ОКОНЧЕНА',
+                          '',
+                          "Вы набрали:",
+                          f"{get_points(tasks, time, points) + (1000 if WIN else 0)} очков",
+                          "",
+                          f"1000 бонусных очков за сдачу (вы дошли до компьютера)" if WIN
+                          else 'В следующий раз дойдите до компьютера',
+                          '',
+                          '',
+                          "Поздравляю! Новый рекорд" if save_results(points, hs)
+                          else "Попробуйте установить новый рекорд",
+                          "",
+                          '',
+                          "ЧТОБЫ НАЧАТЬ СНАЧАЛА НАЖМИТЕ ЛЮБУЮ КНОПКУ"])
 
 
 def show_time(time):  # show time on game screen
@@ -190,6 +201,20 @@ def tasks_mobs_generation(X, Y):  # tasks placement and mobs generation; coords 
         RuntimeError(*m3)
 
 
+def generation_game():
+    furniture_generation()  # load all furniture
+
+    tasks_mobs_generation(map_level.rect.x, map_level.rect.y)  # load tasks adn mobs
+
+    player = Character(0, 0)
+
+    # create sound
+    sound = pygame.mixer.Sound('data\\music.wav')
+    sound.play()
+    music = True
+    return (player, sound, music)
+
+
 class Map(pygame.sprite.Sprite):  # create map for level
     def __init__(self):
         super().__init__(all_sprites)
@@ -264,7 +289,7 @@ class Character(pygame.sprite.Sprite):  # class for player
             self.direction = 1 if keys[pygame.K_LEFT] else 3  # change direction
             self.vx = -10 if self.direction == 1 else 10  # change speed by direction
             self.rect.x += self.vx  # change x coord
-            moving = True  # on 257 str
+            moving = True
 
             while pygame.sprite.spritecollideany(self, vertical_borders,  # remove collide
                                                  collided=pygame.sprite.collide_mask):
@@ -274,7 +299,7 @@ class Character(pygame.sprite.Sprite):  # class for player
             self.direction = 2 if keys[pygame.K_UP] else 0  # change direction
             self.vy = 10 if self.direction == 0 else -10  # change speed by direction
             self.rect.y += self.vy  # change y coord
-            moving = True  # on 257 str
+            moving = True
 
             while pygame.sprite.spritecollideany(self, horizontal_borders,  # remove collide
                                                  collided=pygame.sprite.collide_mask):
@@ -387,7 +412,7 @@ class Computer(InteriorItems):
 
     def update(self):  # makes closing deadline possible
         global WIN
-        if pygame.sprite.spritecollideany(self, player, collided=pygame.sprite.collide_mask):
+        if pygame.sprite.spritecollideany(self, player):
             WIN = True
 
 
@@ -514,21 +539,13 @@ class WrongAnswer(Enemy):
             self.vy = -self.vy
 
 
-start_screen()  # load start screen
+start = StartScreen()  # load start screen
+start.show()
 
 camera = Camera()
 map_level = Map()
 
-furniture_generation()  # load all furniture
-
-tasks_mobs_generation(map_level.rect.x, map_level.rect.y)  # load tasks adn mobs
-
-player = Character(0, 0)
-
-# create sound
-sound = pygame.mixer.Sound('data\\music.wav')
-sound.play()
-music = True
+player, sound, music = generation_game()
 
 while running:
     for event in pygame.event.get():
@@ -562,5 +579,13 @@ while running:
     pygame.display.flip()
 
     running = time_check(millisec, TIME)  # end game if time ended
+    if not running or WIN:
+        finish = FinishScreen(collected_tasks, millisec, POINTS, HIGHSCORE)
+        finish.show()
+        save_results(get_points(collected_tasks, millisec, POINTS), HIGHSCORE)  # update highscore
+        player.kill()
+        player, sound, music = generation_game()
+        millisec = 0
+        collected_tasks = 0
+        running = True
 
-save_results(get_points(collected_tasks, millisec, POINTS), HIGHSCORE)  # update highscore
