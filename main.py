@@ -519,7 +519,7 @@ start_screen()  # load start screen
 camera = Camera()
 map_level = Map()
 
-furniture_generation()  # load all furtiture
+furniture_generation()  # load all furniture
 
 tasks_mobs_generation(map_level.rect.x, map_level.rect.y)  # load tasks adn mobs
 
