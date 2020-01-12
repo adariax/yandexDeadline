@@ -35,4 +35,5 @@ def time_left(current_time, all_time):  # return left 'hours' and 'minutes'
 
 
 def get_points(tasks, time, points):  # return current points
-    return points + tasks * 300 - time * 5
+    ret_points = points + tasks * 300 - time * 5
+    return 0 if ret_points < 0 else ret_points

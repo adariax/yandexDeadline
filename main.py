@@ -6,7 +6,7 @@ from coords import *
 # launch constructor of PyGame
 pygame.init()
 
-# window characteristics
+# window's characteristics
 WIDTH = 800
 HEIGHT = 400
 X = - WIDTH // 2
@@ -73,7 +73,7 @@ class InfoScreen:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
-                elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                     return
             pygame.display.flip()
             clock.tick(FPS)
@@ -92,7 +92,7 @@ class StartScreen(InfoScreen):  # for showing info before start
                           "чтобы собрать задачу, достаточно подойти к ней.",
                           "Для включения/выключения музыки нажмите пробел",
                           '',
-                          "ДЛЯ НАЧАЛА НАЖМИТЕ ЛЮБУЮ КНОПКУ"])
+                          "ДЛЯ НАЧАЛА НАЖМИТЕ ПРОБЕЛ"])
 
 
 class FinishScreen(InfoScreen):  # for showing endgame info
@@ -107,11 +107,13 @@ class FinishScreen(InfoScreen):  # for showing endgame info
                           else 'В следующий раз дойдите до компьютера',
                           '',
                           '',
-                          "Поздравляю! Новый рекорд" if save_results(points, hs)
+                          "Поздравляю! Новый рекорд"
+                          if save_results(get_points(tasks, time, points) + (1000
+                                                                             if WIN else 0), hs)
                           else "Попробуйте установить новый рекорд",
                           "",
                           '',
-                          "ЧТОБЫ НАЧАТЬ СНАЧАЛА НАЖМИТЕ ЛЮБУЮ КНОПКУ"])
+                          "ЧТОБЫ НАЧАТЬ СНАЧАЛА НАЖМИТЕ ПРОБЕЛ"])
 
 
 def show_time(time):  # show time on game screen
@@ -293,7 +295,7 @@ class Character(pygame.sprite.Sprite):  # class for player
 
         global millisec
         if pygame.sprite.spritecollideany(self, enemies, collided=pygame.sprite.collide_mask):
-            millisec += 3
+            millisec += 10
 
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:  # ^ = xor
             self.direction = 1 if keys[pygame.K_LEFT] else 3  # change direction
@@ -339,7 +341,6 @@ class Tasks(pygame.sprite.Sprite):
         # after collide with player, collected tasks increase of 1 and task disappear
         if pygame.sprite.spritecollideany(self, character, collided=pygame.sprite.collide_mask):
             collected_tasks += 1
-            millisec += 2
             self.kill()
 
 
@@ -420,10 +421,14 @@ class Computer(InteriorItems):
     def __init__(self, x, y):
         super().__init__(x, y, 'computer.png')
         self.add(computer)
+        self.mask = pygame.mask.Mask((self.rect.w, self.rect.h + 5), False)  # create mask
+        for x in range(self.rect.w):
+            for y in range(self.rect.h // 3 * 2, self.rect.h + 5):
+                self.mask.set_at((x, y), 1)
 
     def update(self):  # makes closing deadline possible
         global WIN
-        if pygame.sprite.spritecollideany(self, character):
+        if pygame.sprite.spritecollideany(self, character, collided=pygame.sprite.collide_mask):
             WIN = True
 
 
@@ -591,6 +596,7 @@ while running:
 
     running = time_check(millisec, TIME)  # end game if time ended
     if not running or WIN:  # if the player reached the computer or time ended
+        sound.stop()
         finish = FinishScreen(collected_tasks, millisec, POINTS, HIGHSCORE)
         finish.show()  # endgame screen
         save_results(get_points(collected_tasks, millisec, POINTS), HIGHSCORE)  # update highscore
