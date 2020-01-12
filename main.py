@@ -36,8 +36,6 @@ computer = pygame.sprite.Group()
 POINTS = 3000  # start points
 TIME = 1440  # all time
 
-HIGHSCORE = get_highscore()  # get highscore from file
-
 collected_tasks = 0  # var for collected task
 millisec = 0  # var for left time
 
@@ -96,7 +94,7 @@ class StartScreen(InfoScreen):  # for showing info before start
 
 
 class FinishScreen(InfoScreen):  # for showing endgame info
-    def __init__(self, tasks, time, points, hs):
+    def __init__(self, tasks, time, points):
         global WIN  # if player reached computer
         super().__init__(['ИГРА ОКОНЧЕНА',
                           '',
@@ -108,8 +106,7 @@ class FinishScreen(InfoScreen):  # for showing endgame info
                           '',
                           '',
                           "Поздравляю! Новый рекорд"
-                          if save_results(get_points(tasks, time, points) + (1000
-                                                                             if WIN else 0), hs)
+                          if save_results(get_points(tasks, time, points) + (1000 if WIN else 0))
                           else "Попробуйте установить новый рекорд",
                           "",
                           '',
@@ -136,8 +133,8 @@ def show_points(tasks, time):  # show current points on main game screen
     screen.blit(string_rendered, (60, 350))
 
 
-def show_highscore(highscore):  # show highscore from file data\\highscore.sc
-    line = f'HIGHSCORE: {highscore}'
+def show_highscore():  # show highscore from file data\\highscore.sc
+    line = f'HIGHSCORE: {get_highscore()}'  # get highscore from file
     font = pygame.font.Font(None, 33)
 
     string_rendered = font.render(line, True, pygame.Color(38, 43, 68))
@@ -590,16 +587,16 @@ while running:
     # show information on screen
     show_time(millisec)
     show_points(collected_tasks, millisec)
-    show_highscore(HIGHSCORE)
+    show_highscore()
 
     pygame.display.flip()
 
     running = time_check(millisec, TIME)  # end game if time ended
     if not running or WIN:  # if the player reached the computer or time ended
         sound.stop()
-        finish = FinishScreen(collected_tasks, millisec, POINTS, HIGHSCORE)
+        finish = FinishScreen(collected_tasks, millisec, POINTS)
         finish.show()  # endgame screen
-        save_results(get_points(collected_tasks, millisec, POINTS), HIGHSCORE)  # update highscore
+        save_results(get_points(collected_tasks, millisec, POINTS))  # update highscore
 
         map_level, player, sound, music = generation_game()  # regenerate level
 

@@ -18,8 +18,8 @@ def get_highscore():  # read and return highscore from file
     return int(read_data)
 
 
-def save_results(points, highscore):  # check score and write new highscore
-    if points > highscore:
+def save_results(points):  # check score and write new highscore
+    if points > get_highscore():
         with open('data\\highscore.sc', 'w') as f:
             f.write(str(points))
         return True
