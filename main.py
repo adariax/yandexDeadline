@@ -106,6 +106,7 @@ class FinishScreen(InfoScreen):  # for showing endgame info
                           '',
                           '',
                           "Поздравляю! Новый рекорд"
+                          # update highscore and check it
                           if save_results(get_points(tasks, time, points) + (1000 if WIN else 0))
                           else "Попробуйте установить новый рекорд",
                           "",
@@ -596,7 +597,6 @@ while running:
         sound.stop()
         finish = FinishScreen(collected_tasks, millisec, POINTS)
         finish.show()  # endgame screen
-        save_results(get_points(collected_tasks, millisec, POINTS))  # update highscore
 
         map_level, player, sound, music = generation_game()  # regenerate level
 
