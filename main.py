@@ -114,16 +114,38 @@ class FinishScreen(InfoScreen):  # for showing endgame info
                           "ЧТОБЫ НАЧАТЬ СНАЧАЛА НАЖМИТЕ ПРОБЕЛ"])
 
 
+TIME_TEXT_DARK = (pygame.font.Font(None, 33), pygame.Color(63, 40, 60), (698, 350))
+TIME_TEXT = (pygame.font.Font(None, 30), pygame.Color(255, 0, 68), (700, 350))
+
+
 def show_time(time):  # show time on game screen
     minutes, hours = time_left(time, TIME)
     line = f'{hours}:{str(minutes) if minutes >= 10 else str(0) + str(minutes)}'
-    font1 = pygame.font.Font(None, 33)
-    font2 = pygame.font.Font(None, 30)
 
-    string_rendered1 = font1.render(line, True, pygame.Color(63, 40, 60))
-    string_rendered2 = font2.render(line, True, pygame.Color(255, 0, 68))
-    screen.blit(string_rendered1, (698, 350))
-    screen.blit(string_rendered2, (700, 350))
+    string_rendered1 = TIME_TEXT_DARK[0].render(line, True, TIME_TEXT_DARK[1])
+    string_rendered2 = TIME_TEXT[0].render(line, True, TIME_TEXT[1])
+    screen.blit(string_rendered1, TIME_TEXT_DARK[2])
+    screen.blit(string_rendered2, TIME_TEXT[2])
+
+
+def time_damage(damage):
+    counter = 0
+
+    def animation():
+        nonlocal counter, damage
+        h = -1 * counter
+        line = str(damage)
+        string_rendered1 = TIME_TEXT_DARK[0].render(line, True, TIME_TEXT_DARK[1])
+        string_rendered2 = TIME_TEXT[0].render(line, True, TIME_TEXT[1])
+        screen.blit(string_rendered1, (TIME_TEXT_DARK[2][0] + 20, TIME_TEXT_DARK[2][1] + h))
+        screen.blit(string_rendered2, (TIME_TEXT[2][0] + 20, TIME_TEXT[2][1] + h))
+        counter += 1
+        if counter > 30:
+            return False
+        else:
+            return True
+
+    return animation
 
 
 def show_points(tasks, time):  # show current points on main game screen
@@ -293,7 +315,9 @@ class Character(pygame.sprite.Sprite):  # class for player
 
         global millisec
         if pygame.sprite.spritecollideany(self, enemies, collided=pygame.sprite.collide_mask):
-            millisec += 10
+            damage = 10
+            millisec += damage
+            animations.append(time_damage(-damage))
 
         if keys[pygame.K_LEFT] ^ keys[pygame.K_RIGHT]:  # ^ = xor
             self.direction = 1 if keys[pygame.K_LEFT] else 3  # change direction
@@ -430,6 +454,10 @@ class Computer(InteriorItems):
             WIN = True
 
 
+class Damage(pygame.sprite.Sprite):
+    pass
+
+
 class Sofa(InteriorItems):
     def __init__(self, x, y):
         super().__init__(x, y, 'sofa.png')
@@ -558,7 +586,9 @@ start.show()
 
 camera = Camera()
 
+animations = []
 map_level, player, sound, music = generation_game()
+
 
 while running:
     for event in pygame.event.get():
@@ -581,6 +611,14 @@ while running:
     screen.fill((93, 44, 40))
 
     all_sprites.draw(screen)
+
+    # Применяем анимацию
+    i = 0
+    while i < len(animations):
+        if not animations[i]():
+            del animations[i]
+        else:
+            i += 1
 
     clock.tick(FPS)
     millisec += 1
