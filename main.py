@@ -454,10 +454,6 @@ class Computer(InteriorItems):
             WIN = True
 
 
-class Damage(pygame.sprite.Sprite):
-    pass
-
-
 class Sofa(InteriorItems):
     def __init__(self, x, y):
         super().__init__(x, y, 'sofa.png')
